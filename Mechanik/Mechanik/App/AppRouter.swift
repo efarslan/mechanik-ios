@@ -14,10 +14,13 @@ struct AppRouter: View {
     
     var body: some View {
         Group {
-            if appState.isLoggedIn {
-                HomeView()
+            if !appState.isAuthResolved {
+                ProgressView("Yükleniyor...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if appState.route == .mainTabs {
+                MainTabView()
             } else {
-                LoginView(appState: appState)
+                LoginView()
             }
         }
     }

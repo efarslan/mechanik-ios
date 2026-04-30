@@ -41,6 +41,35 @@ final class BusinessService {
         
         return nil
     }
+
+    func fetchVehicleCreateAccess(userId: String, email: String?) async throws -> VehicleCreateAccess? {
+        guard let access = try await fetchBusinessAccess(userId: userId, email: email) else {
+            return nil
+        }
+        return VehicleCreateAccess(businessId: access.businessId, role: access.role)
+    }
+
+    func fetchBusinessAccess(userId: String, email: String?) async throws -> BusinessAccess? {
+        guard let businessId = try await fetchCurrentBusinessId(userId: userId, email: email) else {
+            return nil
+        }
+
+        let businessSnapshot = try await db.collection("businesses").document(businessId).getDocument()
+        let ownerId = businessSnapshot.data()?["ownerId"] as? String
+
+        if ownerId == userId {
+            return BusinessAccess(businessId: businessId, role: "owner")
+        }
+
+        let memberSnapshot = try await db.collection("businesses")
+            .document(businessId)
+            .collection("members")
+            .document(userId)
+            .getDocument()
+
+        let role = memberSnapshot.data()?["role"] as? String
+        return BusinessAccess(businessId: businessId, role: role)
+    }
     
     /// `collectionGroup("invites")` where `email` + `status == invited` → write member + delete invite (web `BusinessProvider`).
     private func acceptPendingInvitesIfNeeded(userId: String, email: String?) async {

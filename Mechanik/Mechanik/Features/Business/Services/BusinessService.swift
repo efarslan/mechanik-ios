@@ -70,6 +70,11 @@ final class BusinessService {
         let role = memberSnapshot.data()?["role"] as? String
         return BusinessAccess(businessId: businessId, role: role)
     }
+
+    func fetchBusinessName(businessId: String) async throws -> String? {
+        let snapshot = try await db.collection("businesses").document(businessId).getDocument()
+        return snapshot.data()?["name"] as? String
+    }
     
     /// `collectionGroup("invites")` where `email` + `status == invited` → write member + delete invite (web `BusinessProvider`).
     private func acceptPendingInvitesIfNeeded(userId: String, email: String?) async {

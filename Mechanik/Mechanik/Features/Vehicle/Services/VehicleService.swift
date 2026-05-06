@@ -200,6 +200,46 @@ final class VehicleService {
         }
     }
 
+    func fetchJobs(businessId: String, includeCancelled: Bool = false) async throws -> [JobListItem] {
+        let snapshot = try await db.collection("jobs")
+            .whereField("businessId", isEqualTo: businessId)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { document in
+            let data = document.data()
+            let rawStatus = data["status"] as? String
+            let status = JobStatus(rawValue: rawStatus?.lowercased() ?? "") ?? .active
+
+            if !includeCancelled, status == .cancelled {
+                return nil
+            }
+
+            guard let vehicleId = data["vehicleId"] as? String, !vehicleId.isEmpty else {
+                return nil
+            }
+
+            return JobListItem(
+                id: document.documentID,
+                vehicleId: vehicleId,
+                title: data["title"] as? String ?? "(Basliksiz islem)",
+                status: status,
+                createdAt: (data["createdAt"] as? Timestamp)?.dateValue(),
+                updatedAt: (data["updatedAt"] as? Timestamp)?.dateValue(),
+                category: data["category"] as? String,
+                mileage: Self.intFromFirestore(data["mileage"]),
+                notes: data["notes"] as? String,
+                laborFee: Self.doubleFromFirestore(data["laborFee"]),
+                selectedQuickJobs: Self.quickItems(from: data["selectedQuickJobs"]),
+                imageUrls: data["imageUrls"] as? [String] ?? []
+            )
+        }
+        .sorted { lhs, rhs in
+            let lhsDate = lhs.createdAt ?? .distantPast
+            let rhsDate = rhs.createdAt ?? .distantPast
+            return lhsDate > rhsDate
+        }
+    }
+
     func fetchJobStats(vehicleId: String) async throws -> VehicleJobStats {
         let jobs = try await fetchJobs(vehicleId: vehicleId, includeCancelled: true)
 

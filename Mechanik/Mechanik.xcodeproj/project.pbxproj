@@ -40,6 +40,7 @@
 		4E9A6DEF2FA0053000E6BC07 /* Exceptions for "Mechanik" folder in "Mechanik" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"App/Extensions/Date+RelativeLabel.swift",
 				App/Extensions/VehicleStatusUI.swift,
 				Info.plist,
 			);
@@ -52,6 +53,7 @@
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			buildPhase = 4E0621302F96C02D00B9B7D1 /* Resources */;
 			membershipExceptions = (
+				"App/Extensions/Date+RelativeLabel.swift",
 				App/Extensions/VehicleStatusUI.swift,
 			);
 		};
@@ -227,11 +229,10 @@
 				};
 			};
 			buildConfigurationList = 4E06212D2F96C02D00B9B7D1 /* Build configuration list for PBXProject "Mechanik" */;
-			developmentRegion = en;
+			developmentRegion = tr;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
-				Base,
 				tr,
 			);
 			mainGroup = 4E0621292F96C02D00B9B7D1;

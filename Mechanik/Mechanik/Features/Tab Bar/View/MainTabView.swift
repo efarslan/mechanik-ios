@@ -43,7 +43,7 @@ struct MainTabView: View {
     }
 }
 
-// MARK: - PLACEHOLDER VIEWS (REMOVE WHEN YOU HAVE MVVM SCREENS)
+// MARK: - PLACEHOLDER VIEWS
 
 
 struct SettingsView: View {

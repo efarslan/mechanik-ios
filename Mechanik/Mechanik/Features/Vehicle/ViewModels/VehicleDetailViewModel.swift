@@ -126,7 +126,7 @@ final class VehicleDetailViewModel: ObservableObject {
         currentUser = user
 
         do {
-            guard let access = try await businessService.fetchBusinessAccess(userId: user.id, email: user.email) else {
+            guard let access = try await businessService.fetchBusinessAccess(userId: user.id, email: user.email, name: user.name) else {
                 errorMessage = "İşletme bulunamadı."
                 isLoading = false
                 return

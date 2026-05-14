@@ -53,7 +53,7 @@ struct TrendsSectionView: View {
                             value: trendPoints
                                 .reduce(0) { $0 + ($1.labor + $1.parts) }
                                 .formattedCurrency,
-                            tint: Color(red: 0.94, green: 0.75, blue: 0.20)
+                            tint: .appYellow
                         )
 
                         CompactInsightPill(

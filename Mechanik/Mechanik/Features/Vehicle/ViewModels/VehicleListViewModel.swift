@@ -38,12 +38,12 @@ final class VehicleListViewModel: ObservableObject {
         }
     }
 
-    func load(userId: String, email: String?) async {
+    func load(userId: String, email: String?, name: String? = nil) async {
         isLoading = true
         errorMessage = nil
 
         do {
-            async let businessIdTask = businessService.fetchCurrentBusinessId(userId: userId, email: email)
+            async let businessIdTask = businessService.fetchCurrentBusinessId(userId: userId, email: email, name: name)
             async let brandsTask = service.fetchBrands()
 
             guard let resolvedBusinessId = try await businessIdTask else {

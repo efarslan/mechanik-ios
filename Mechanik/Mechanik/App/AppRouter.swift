@@ -25,3 +25,9 @@ struct AppRouter: View {
         }
     }
 }
+
+#Preview {
+    AppRouter()
+        .environmentObject(AppState())
+}
+

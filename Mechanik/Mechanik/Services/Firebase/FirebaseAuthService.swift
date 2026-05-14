@@ -22,8 +22,12 @@ final class FirebaseAuthService {
     }
     
     // MARK: - REGISTER
-    func register(email: String, password: String) async throws -> User {
+    func register(email: String, password: String, name: String) async throws -> User {
         let result = try await Auth.auth().createUser(withEmail: normalizedEmail(email), password: password)
+        let changeRequest = result.user.createProfileChangeRequest()
+        changeRequest.displayName = normalizedName(name)
+        try await changeRequest.commitChanges()
+        try await result.user.reload()
         return mapUser(result.user)
     }
 
@@ -65,11 +69,16 @@ final class FirebaseAuthService {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
+    private func normalizedName(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private func mapUser(_ firebaseUser: FirebaseAuth.User) -> User {
         User(
             id: firebaseUser.uid,
             email: firebaseUser.email ?? "",
-            emailVerified: firebaseUser.isEmailVerified
+            emailVerified: firebaseUser.isEmailVerified,
+            name: firebaseUser.displayName
         )
     }
 }

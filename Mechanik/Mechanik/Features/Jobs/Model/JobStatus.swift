@@ -17,7 +17,7 @@ enum JobStatus: String, Codable {
         case .active:
             return .green
         case .completed:
-            return Color(red: 0.94, green: 0.75, blue: 0.20)
+            return .appYellow
         case .cancelled:
             return .gray
         }

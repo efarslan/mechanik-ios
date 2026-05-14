@@ -71,7 +71,7 @@ final class NewJobViewModel: ObservableObject {
         self.vehicleId = vehicleId
 
         do {
-            access = try await businessService.fetchBusinessAccess(userId: user.id, email: user.email)
+            access = try await businessService.fetchBusinessAccess(userId: user.id, email: user.email, name: user.name)
 
             if access == nil {
                 errorMessage = "İşletme Bulunamadı."

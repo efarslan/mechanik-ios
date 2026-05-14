@@ -159,7 +159,7 @@ struct NewJobView: View {
                         .padding(.vertical, 10)
                         .background(
                             viewModel.category == category
-                                ? Color(red: 0.94, green: 0.75, blue: 0.20)
+                            ? Color.appYellow
                                 : Color.white
                         )
                         .foregroundStyle(
@@ -253,7 +253,7 @@ struct NewJobView: View {
                         .background(Color(red: 0.99, green: 0.96, blue: 0.86))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(Color(red: 0.94, green: 0.75, blue: 0.20).opacity(0.4), lineWidth: 1)
+                                .stroke(Color.appYellow.opacity(0.4), lineWidth: 1)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
@@ -433,7 +433,7 @@ struct NewJobView: View {
                         .fill(
                             isComplete
                                 ? Color.green.opacity(0.15)
-                                : Color(red: 0.94, green: 0.75, blue: 0.20)
+                            : .appYellow
                         )
                         .frame(width: 26, height: 26)
 

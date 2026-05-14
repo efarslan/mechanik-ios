@@ -14,20 +14,24 @@ final class HomeViewModel: ObservableObject {
 
     private let businessService: BusinessService
     private let vehicleService: VehicleService
+    private let authService: FirebaseAuthService
     private var lastUser: User?
 
 
     init() {
         self.businessService = BusinessService()
         self.vehicleService = .shared
+        self.authService = .shared
     }
 
     init(
         businessService: BusinessService,
-        vehicleService: VehicleService
+        vehicleService: VehicleService,
+        authService: FirebaseAuthService? = nil
     ) {
         self.businessService = businessService
         self.vehicleService = vehicleService
+        self.authService = authService ?? .shared
     }
 
     var recentJobs: [JobListItem] {
@@ -174,6 +178,14 @@ final class HomeViewModel: ObservableObject {
         await fetchDashboard(for: user)
     }
 
+    func resendVerificationEmail() async {
+        do {
+            try await authService.sendEmailVerification()
+        } catch {
+            errorMessage = "Doğrulama e-postası gönderilemedi."
+        }
+    }
+
     func vehicle(for job: JobListItem) -> Vehicle? {
         vehicles.first(where: { $0.id == job.vehicleId })
     }
@@ -193,7 +205,7 @@ final class HomeViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            guard let access = try await businessService.fetchBusinessAccess(userId: user.id, email: user.email) else {
+            guard let access = try await businessService.fetchBusinessAccess(userId: user.id, email: user.email, name: user.name) else {
                 self.access = nil
                 self.vehicles = []
                 self.jobs = []

@@ -11,6 +11,7 @@ final class LoginViewModel: ObservableObject {
     }
 
     @Published var mode: AuthMode = .signIn
+    @Published var name: String = ""
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var confirmPassword: String = ""
@@ -39,6 +40,7 @@ final class LoginViewModel: ObservableObject {
         mode = newMode
         errorMessage = nil
         successMessage = nil
+        name = ""
         password = ""
         confirmPassword = ""
         showPassword = false
@@ -63,7 +65,7 @@ final class LoginViewModel: ObservableObject {
                 let user = try await authService.login(email: normalizedEmail, password: password)
                 appState.login(user: user, selectedTab: 0)
             case .owner:
-                let user = try await authService.register(email: normalizedEmail, password: password)
+                let user = try await authService.register(email: normalizedEmail, password: password, name: normalizedName(name))
                 try await authService.sendEmailVerification()
                 successMessage = "Hesap oluşturuldu. Doğrulama e-postası gönderildi."
                 appState.login(user: user, selectedTab: 2)
@@ -115,6 +117,10 @@ final class LoginViewModel: ObservableObject {
 
         guard !normalizedEmail.isEmpty, !password.isEmpty else {
             return "E-posta ve şifre zorunludur."
+        }
+
+        guard mode == .signIn || !normalizedName(name).isEmpty else {
+            return "Ad soyad zorunludur."
         }
 
         guard isValidEmail(normalizedEmail) else {
@@ -184,6 +190,10 @@ final class LoginViewModel: ObservableObject {
 
     private func normalized(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func normalizedName(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func isValidEmail(_ email: String) -> Bool {

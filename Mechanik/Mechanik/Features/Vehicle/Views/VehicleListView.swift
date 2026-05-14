@@ -29,7 +29,7 @@ struct VehicleListView: View {
             .task {
                 guard !hasLoaded, let user = appState.currentUser else { return }
                 hasLoaded = true
-                await viewModel.load(userId: user.id, email: user.email)
+                await viewModel.load(userId: user.id, email: user.email, name: user.name)
             }
             .refreshable {
                 await reloadVehicles()
@@ -111,7 +111,7 @@ struct VehicleListView: View {
                 .font(.subheadline.weight(.bold))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color(red: 0.94, green: 0.75, blue: 0.20))
+                .background(.appYellow)
                 .foregroundStyle(Color.black.opacity(0.85))
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
@@ -231,7 +231,7 @@ struct VehicleListView: View {
                     isNavigatingToNewVehicle = true
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(Color(red: 0.94, green: 0.75, blue: 0.20))
+                .tint(.appYellow)
             }
         }
         .frame(maxWidth: .infinity)
@@ -252,7 +252,7 @@ struct VehicleListView: View {
 
     private func reloadVehicles() async {
         guard let user = appState.currentUser else { return }
-        await viewModel.load(userId: user.id, email: user.email)
+        await viewModel.load(userId: user.id, email: user.email, name: user.name)
     }
 }
 

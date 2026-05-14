@@ -8,6 +8,7 @@ struct LoginView: View {
     @FocusState private var focusedField: Field?
 
     private enum Field {
+        case name
         case email
         case password
         case confirmPassword
@@ -120,6 +121,19 @@ struct LoginView: View {
 
     private var formFields: some View {
         VStack(alignment: .leading, spacing: 16) {
+            if viewModel.mode == .owner {
+                inputSection(
+                    title: "Ad Soyad",
+                    text: $viewModel.name,
+                    placeholder: "Adınız Soyadınız",
+                    keyboardType: .default,
+                    textContentType: .name,
+                    textInputAutocapitalization: .words,
+                    field: .name
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             inputSection(
                 title: "E-Posta",
                 text: $viewModel.email,
@@ -331,6 +345,7 @@ struct LoginView: View {
         placeholder: String,
         keyboardType: UIKeyboardType,
         textContentType: UITextContentType?,
+        textInputAutocapitalization: TextInputAutocapitalization = .never,
         field: Field
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -340,7 +355,7 @@ struct LoginView: View {
 
             TextField(placeholder, text: text)
                 .keyboardType(keyboardType)
-                .textInputAutocapitalization(.never)
+                .textInputAutocapitalization(textInputAutocapitalization)
                 .textContentType(textContentType)
                 .autocorrectionDisabled()
                 .padding(.horizontal, 16)

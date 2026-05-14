@@ -35,7 +35,7 @@ struct KPISectionView: View {
                     title: "Aktif Tutar",
                     value: kpis.activeValue.formattedCurrency,
                     subtitle: "İşçilik + parça",
-                    tint: Color(red: 0.94, green: 0.75, blue: 0.20),
+                    tint: .appYellow,
                     systemImage: "turkishlirasign.circle.fill",
                     compactValue: true
                 )

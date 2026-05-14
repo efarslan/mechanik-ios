@@ -43,36 +43,6 @@ struct MainTabView: View {
     }
 }
 
-// MARK: - PLACEHOLDER VIEWS
-
-
-struct SettingsView: View {
-    @EnvironmentObject private var appState: AppState
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Ayarlar")
-                    .font(.title2.bold())
-
-                if let user = appState.currentUser {
-                    Text(user.email)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Button("Çıkış Yap") {
-                    appState.logout()
-                }
-                .foregroundStyle(.red)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
-            .navigationTitle("Ayarlar")
-        }
-    }
-}
-
 #Preview {
     MainTabView()
         .environmentObject(AppState())

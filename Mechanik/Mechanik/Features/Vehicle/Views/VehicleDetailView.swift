@@ -288,7 +288,7 @@ struct VehicleDetailView: View {
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
-                        .background(Color(red: 0.94, green: 0.75, blue: 0.20))
+                        .background(.appYellow)
                         .foregroundStyle(Color.black.opacity(0.85))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }

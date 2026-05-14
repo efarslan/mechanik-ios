@@ -71,7 +71,11 @@ struct HomeView: View {
                 )
 
                 if viewModel.shouldShowVerificationBanner {
-                    VerificationBannerView()
+                    VerificationBanner {
+                        Task {
+                            await viewModel.resendVerificationEmail()
+                        }
+                    }
                 }
 
                 if let errorMessage = viewModel.errorMessage {

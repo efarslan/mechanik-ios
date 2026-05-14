@@ -268,7 +268,7 @@ struct NewVehicleView: View {
                 Text("\(step)")
                     .font(.caption.weight(.bold))
                     .frame(width: 24, height: 24)
-                    .background(Color(red: 0.94, green: 0.75, blue: 0.20))
+                    .background(.appYellow)
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 4) {

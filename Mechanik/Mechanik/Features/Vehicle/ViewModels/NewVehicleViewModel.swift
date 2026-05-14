@@ -80,7 +80,7 @@ final class NewVehicleViewModel: ObservableObject {
 
         do {
             async let brandsTask = vehicleService.fetchBrands()
-            async let accessTask = businessService.fetchVehicleCreateAccess(userId: user.id, email: user.email)
+            async let accessTask = businessService.fetchVehicleCreateAccess(userId: user.id, email: user.email, name: user.name)
 
             brands = try await brandsTask
             access = try await accessTask

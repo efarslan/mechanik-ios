@@ -14,8 +14,8 @@ final class BusinessService {
     private let db = Firestore.firestore()
     
     /// Web parity: `BusinessProvider` / `fetchBusiness` — invites first, then owner, then member.
-    func fetchCurrentBusinessId(userId: String, email: String?) async throws -> String? {
-        await acceptPendingInvitesIfNeeded(userId: userId, email: email)
+    func fetchCurrentBusinessId(userId: String, email: String?, name: String? = nil) async throws -> String? {
+        await acceptPendingInvitesIfNeeded(userId: userId, email: email, name: name)
         
         // 1) Owner
         let ownedSnapshot = try await db.collection("businesses")
@@ -42,15 +42,15 @@ final class BusinessService {
         return nil
     }
 
-    func fetchVehicleCreateAccess(userId: String, email: String?) async throws -> VehicleCreateAccess? {
-        guard let access = try await fetchBusinessAccess(userId: userId, email: email) else {
+    func fetchVehicleCreateAccess(userId: String, email: String?, name: String? = nil) async throws -> VehicleCreateAccess? {
+        guard let access = try await fetchBusinessAccess(userId: userId, email: email, name: name) else {
             return nil
         }
         return VehicleCreateAccess(businessId: access.businessId, role: access.role)
     }
 
-    func fetchBusinessAccess(userId: String, email: String?) async throws -> BusinessAccess? {
-        guard let businessId = try await fetchCurrentBusinessId(userId: userId, email: email) else {
+    func fetchBusinessAccess(userId: String, email: String?, name: String? = nil) async throws -> BusinessAccess? {
+        guard let businessId = try await fetchCurrentBusinessId(userId: userId, email: email, name: name) else {
             return nil
         }
 
@@ -77,9 +77,10 @@ final class BusinessService {
     }
     
     /// `collectionGroup("invites")` where `email` + `status == invited` → write member + delete invite (web `BusinessProvider`).
-    private func acceptPendingInvitesIfNeeded(userId: String, email: String?) async {
+    private func acceptPendingInvitesIfNeeded(userId: String, email: String?, name: String?) async {
         guard let email = email, !email.isEmpty else { return }
         let emailLower = email.lowercased()
+        let trimmedName = name?.trimmingCharacters(in: .whitespacesAndNewlines)
         
         do {
             let invitesSnapshot = try await db.collectionGroup("invites")
@@ -94,14 +95,20 @@ final class BusinessService {
                 let role = (data["role"] as? String) ?? "viewer"
                 
                 let memberRef = db.collection("businesses").document(businessId).collection("members").document(userId)
-                try await memberRef.setData([
+                var memberData: [String: Any] = [
                     "userId": userId,
                     "role": role,
                     "status": "active",
                     "email": email,
                     "createdAt": FieldValue.serverTimestamp(),
                     "updatedAt": FieldValue.serverTimestamp(),
-                ], merge: true)
+                ]
+
+                if let trimmedName, !trimmedName.isEmpty {
+                    memberData["name"] = trimmedName
+                }
+
+                try await memberRef.setData(memberData, merge: true)
                 
                 try await invDoc.reference.delete()
             }

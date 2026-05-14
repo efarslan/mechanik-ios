@@ -21,9 +21,7 @@ struct NewJobView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                ProgressView("Yükleniyor...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(screenBackground)
+                NewJobSkeletonView()
             } else {
                 VStack(spacing: 0) {
                     // Scroll içerik
@@ -399,7 +397,7 @@ struct NewJobView: View {
                 } label: {
                     HStack(spacing: 8) {
                         if viewModel.isSaving {
-                            ProgressView().tint(.white)
+                            ButtonLoadingSkeleton()
                         }
                         Text(viewModel.isSaving ? "Kaydediliyor..." : "İşlemi Kaydet")
                             .fontWeight(.bold)

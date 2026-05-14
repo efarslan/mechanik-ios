@@ -16,8 +16,7 @@ struct JobDetailImagePreviewSheet: View {
                             .scaledToFit()
                             .padding(16)
                     default:
-                        ProgressView()
-                            .tint(.white)
+                        SkeletonView(width: 160, height: 220, cornerRadius: 18, opacity: 0.45)
                     }
                 }
             } else if let uiImage = image.image {

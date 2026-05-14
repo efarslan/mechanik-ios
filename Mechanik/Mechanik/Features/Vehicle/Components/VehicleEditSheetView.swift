@@ -153,8 +153,7 @@ extension VehicleEditSheetView {
                 HStack(spacing: 8) {
 
                     if viewModel.isSaving {
-                        ProgressView()
-                            .tint(.white)
+                        ButtonLoadingSkeleton()
                     }
 
                     Text(

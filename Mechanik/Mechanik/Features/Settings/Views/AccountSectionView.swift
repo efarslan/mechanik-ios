@@ -44,7 +44,7 @@ struct AccountSectionView: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 14)
                             .fill(Color.white.opacity(0.6))
-                        ProgressView()
+                        ButtonLoadingSkeleton()
                     }
                 }
             }

@@ -15,8 +15,7 @@ struct AppRouter: View {
     var body: some View {
         Group {
             if !appState.isAuthResolved {
-                ProgressView("Yükleniyor...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                AppLaunchSkeleton()
             } else if appState.route == .mainTabs {
                 MainTabView()
             } else {

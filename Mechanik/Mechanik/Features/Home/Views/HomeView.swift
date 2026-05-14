@@ -15,7 +15,7 @@ struct HomeView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading && viewModel.recentJobs.isEmpty && viewModel.alerts.isEmpty {
-                    loadingState
+                    HomeSkeletonView()
                 } else {
                     content
                 }
@@ -130,15 +130,6 @@ struct HomeView: View {
         }
     }
 
-    private var loadingState: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            Text("Panel yükleniyor...")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 }
 
 #Preview {

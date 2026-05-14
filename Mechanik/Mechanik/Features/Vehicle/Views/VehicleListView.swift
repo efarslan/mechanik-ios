@@ -12,7 +12,7 @@ struct VehicleListView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    loadingState
+                    VehicleListSkeletonView()
                 } else if let errorMessage = viewModel.errorMessage {
                     feedbackState(
                         icon: "exclamationmark.triangle",
@@ -190,8 +190,7 @@ struct VehicleListView: View {
                         .scaledToFit()
                         .padding(8)
                 } placeholder: {
-                    ProgressView()
-                        .scaleEffect(0.7)
+                    SkeletonView(width: 28, height: 28, cornerRadius: 8)
                 }
             } else {
                 Text(String(vehicle.brand.prefix(2)).uppercased())
@@ -202,15 +201,6 @@ struct VehicleListView: View {
         .frame(width: 50, height: 50)
     }
 
-    private var loadingState: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            Text("Yükleniyor...")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 
     private func feedbackState(icon: String, title: String, message: String) -> some View {
         VStack(spacing: 14) {

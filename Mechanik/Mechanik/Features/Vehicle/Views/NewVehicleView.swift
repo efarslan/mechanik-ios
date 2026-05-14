@@ -16,8 +16,7 @@ struct NewVehicleView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    ProgressView("Yükleniyor...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    NewVehicleSkeletonView()
                 } else {
                     formContent
                 }
@@ -243,8 +242,7 @@ struct NewVehicleView: View {
                 } label: {
                     HStack(spacing: 8) {
                         if viewModel.isSaving {
-                            ProgressView()
-                                .tint(.white)
+                            ButtonLoadingSkeleton()
                         }
 
                         Text(viewModel.isSaving ? "Kaydediliyor..." : "Araç Oluştur")

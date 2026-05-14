@@ -139,8 +139,7 @@ private extension JobDetailImagesSection {
                     .fill(Color(.secondarySystemBackground))
                     .frame(height: 100)
                     .overlay(
-                        ProgressView()
-                            .scaleEffect(0.75)
+                        SkeletonView(height: 100, cornerRadius: 14, opacity: 0.8)
                     )
                 }
             }

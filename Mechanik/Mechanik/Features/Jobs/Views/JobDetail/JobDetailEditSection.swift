@@ -162,9 +162,7 @@ private extension JobDetailEditSection {
                 HStack(spacing: 8) {
 
                     if vm.isSaving {
-                        ProgressView()
-                            .tint(.white)
-                            .scaleEffect(0.85)
+                        ButtonLoadingSkeleton()
                     }
 
                     Text(

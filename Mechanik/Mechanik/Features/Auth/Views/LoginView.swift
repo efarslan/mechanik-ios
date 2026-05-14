@@ -190,8 +190,7 @@ struct LoginView: View {
             } label: {
                 HStack(spacing: 10) {
                     if viewModel.isSubmitting {
-                        ProgressView()
-                            .tint(.white)
+                        ButtonLoadingSkeleton()
                     }
 
                     Text(buttonTitle)
@@ -300,8 +299,7 @@ struct LoginView: View {
                 } label: {
                     HStack {
                         if viewModel.isForgotPasswordLoading {
-                            ProgressView()
-                                .tint(.white)
+                            ButtonLoadingSkeleton()
                         }
 
                         Text(viewModel.isForgotPasswordLoading ? "Gonderiliyor..." : "Mail Gonder")

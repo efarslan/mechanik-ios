@@ -29,8 +29,7 @@ struct VehicleBrandLogoView: View {
                         .padding(12)
 
                 } placeholder: {
-                    ProgressView()
-                        .tint(.white)
+                    SkeletonView(width: 40, height: 40, cornerRadius: 12, opacity: 0.65)
                 }
 
             } else {

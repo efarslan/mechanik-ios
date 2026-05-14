@@ -15,9 +15,7 @@ struct VehicleDetailView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                ProgressView("Yükleniyor...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(screenBackground)
+                VehicleDetailSkeletonView()
             } else if let errorMessage = viewModel.errorMessage, viewModel.vehicle == nil {
                 FeedbackStateView(
                     icon: "exclamationmark.triangle",

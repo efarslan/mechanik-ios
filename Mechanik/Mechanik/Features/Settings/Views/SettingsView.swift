@@ -47,7 +47,13 @@ struct SettingsView: View {
                 await viewModel.load(user: appState.currentUser)
             }
             .refreshable {
+                await appState.refreshCurrentUser()
                 await viewModel.load(user: appState.currentUser)
+            }
+            .onChange(of: appState.currentUser?.emailVerified) { _, _ in
+                Task {
+                    await viewModel.load(user: appState.currentUser)
+                }
             }
             .alert(item: $viewModel.errorMessage) { message in
                 Alert(

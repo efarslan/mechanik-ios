@@ -54,11 +54,11 @@ struct NewVehicleView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 16) {
                 if let errorMessage = viewModel.errorMessage {
-                    messageCard(title: "Bir sorun var", message: errorMessage, color: .red)
+                    AppMessageCard(title: "Bir sorun var", message: errorMessage, color: .red)
                 }
 
                 if let infoMessage = viewModel.infoMessage {
-                    messageCard(title: "Bilgi", message: infoMessage, color: .orange)
+                    AppMessageCard(title: "Bilgi", message: infoMessage, color: .orange)
                 }
 
                 vehicleInfoSection
@@ -73,7 +73,7 @@ struct NewVehicleView: View {
 
     private var vehicleInfoSection: some View {
         formSection(title: "Araç Bilgileri", subtitle: "Plaka, marka, model ve teknik detaylar", step: 1) {
-            textField(
+            AppTextField(
                 title: "Plaka",
                 placeholder: "34ABC123",
                 text: $viewModel.plate,
@@ -88,7 +88,7 @@ struct NewVehicleView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                fieldLabel("Marka")
+                FormLabel(title: "Marka")
 
                 Menu {
                     ForEach(viewModel.brands) { brand in
@@ -97,17 +97,17 @@ struct NewVehicleView: View {
                         }
                     }
                 } label: {
-                    pickerLabel(
+                    AppPickerField(
                         title: viewModel.brands.first(where: { $0.id == viewModel.brandId })?.name ?? "Marka Seçin",
                         isSelected: !viewModel.brandId.isEmpty
                     )
                 }
 
-                fieldError(viewModel.errors.brand)
+                FormErrorText(message: viewModel.errors.brand)
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                fieldLabel("Model")
+                FormLabel(title: "Model")
 
                 Menu {
                     ForEach(viewModel.models, id: \.self) { model in
@@ -116,17 +116,17 @@ struct NewVehicleView: View {
                         }
                     }
                 } label: {
-                    pickerLabel(
+                    AppPickerField(
                         title: viewModel.model.isEmpty ? (viewModel.brandId.isEmpty ? "Önce Marka Seçin" : "Model Seçin") : viewModel.model,
                         isSelected: !viewModel.model.isEmpty
                     )
                 }
                 .disabled(viewModel.brandId.isEmpty)
 
-                fieldError(viewModel.errors.model)
+                FormErrorText(message: viewModel.errors.model)
             }
 
-            textField(
+            AppTextField(
                 title: "Model Yılı",
                 placeholder: "\(viewModel.minYear)-\(viewModel.maxYear)",
                 text: $viewModel.year,
@@ -140,7 +140,7 @@ struct NewVehicleView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                fieldLabel("Yakıt Tipi")
+                FormLabel(title: "Yakıt Tipi")
 
                 Picker("Yakıt Tipi", selection: $viewModel.fuelType) {
                     ForEach(VehicleFuelType.allCases) { fuelType in
@@ -151,7 +151,7 @@ struct NewVehicleView: View {
             }
 
             if !viewModel.shouldHideEngineSize {
-                textField(
+                AppTextField(
                     title: "Motor Hacmi",
                     placeholder: "Ornek: 1.6",
                     text: $viewModel.engineSize,
@@ -170,7 +170,7 @@ struct NewVehicleView: View {
                 }
             }
 
-            textField(
+            AppTextField(
                 title: "Şasi No",
                 placeholder: "17 karakter",
                 text: $viewModel.chassisNo,
@@ -184,14 +184,14 @@ struct NewVehicleView: View {
 
     private var ownerSection: some View {
         formSection(title: "Araç Sahibi", subtitle: "İletişim bilgileri", step: 2) {
-            textField(
+            AppTextField(
                 title: "Ad Soyad",
                 placeholder: "Araç sahibinin adı",
                 text: $viewModel.ownerName,
                 error: viewModel.errors.ownerName
             )
 
-            textField(
+            AppTextField(
                 title: "Telefon",
                 placeholder: "0555 123 45 67",
                 text: $viewModel.ownerPhone,
@@ -204,7 +204,7 @@ struct NewVehicleView: View {
     private var notesSection: some View {
         formSection(title: "Notlar", subtitle: "Araç hakkında ek bilgi", step: 3) {
             VStack(alignment: .leading, spacing: 8) {
-                fieldLabel("Not")
+                FormLabel(title: "Notlar")
 
                 TextEditor(text: $viewModel.notes)
                     .frame(minHeight: 100)
@@ -218,7 +218,7 @@ struct NewVehicleView: View {
     private var footerButtons: some View {
         VStack(spacing: 12) {
             if viewModel.errors.hasErrors {
-                messageCard(title: "Eksik alanlar var", message: "Lütfen zorunlu alanları kontrol edin.", color: .red)
+                AppMessageCard(title: "Eksik alanlar var", message: "Lütfen zorunlu alanları kontrol edin.", color: .red)
             }
 
             HStack(spacing: 12) {
@@ -284,82 +284,7 @@ struct NewVehicleView: View {
         .background(.white)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
-
-    private func textField(
-        title: String,
-        placeholder: String,
-        text: Binding<String>,
-        keyboardType: UIKeyboardType = .default,
-        error: String?
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            fieldLabel(title)
-
-            TextField(placeholder, text: text)
-                .keyboardType(keyboardType)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(.horizontal, 14)
-                .padding(.vertical, 14)
-                .background(Color(red: 0.97, green: 0.97, blue: 0.96))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(error == nil ? Color.clear : Color.red.opacity(0.4), lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-            fieldError(error)
-        }
-    }
-
-    private func pickerLabel(title: String, isSelected: Bool) -> some View {
-        HStack {
-            Text(title)
-                .foregroundStyle(isSelected ? Color.black.opacity(0.82) : .secondary)
-
-            Spacer()
-
-            Image(systemName: "chevron.down")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 14)
-        .background(Color(red: 0.97, green: 0.97, blue: 0.96))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private func messageCard(title: String, message: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(color)
-
-            Text(message)
-                .font(.footnote)
-                .foregroundStyle(color.opacity(0.85))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(color.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private func fieldLabel(_ title: String) -> some View {
-        Text(title)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-    }
-
-    private func fieldError(_ message: String?) -> some View {
-        Group {
-            if let message {
-                Text(message)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-        }
-    }
+ 
 }
 
 #Preview {

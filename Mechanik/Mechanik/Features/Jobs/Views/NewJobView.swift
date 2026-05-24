@@ -104,10 +104,10 @@ struct NewJobView: View {
         let isComplete = !viewModel.title.trimmingCharacters(in: .whitespaces).isEmpty
 
         return formSection(title: "Temel Bilgiler", subtitle: "İşlem başlığı ve araç kilometresi", step: 1, isComplete: isComplete) {
-            inputField(title: "İşlem Başlığı *", placeholder: "Periyodik bakım", text: $viewModel.title)
+            AppTextField(title: "İşlem Başlığı *", placeholder: "Periyodik bakım", text: $viewModel.title)
 
             HStack(spacing: 12) {
-                inputField(
+                AppTextField(
                     title: "Kilometre",
                     placeholder: "150.000",
                     text: $viewModel.mileage,
@@ -117,7 +117,7 @@ struct NewJobView: View {
                     viewModel.formatMileageInput(newValue)
                 }
 
-                inputField(
+                AppTextField(
                     title: "İşçilik Ücreti",
                     placeholder: "0",
                     text: $viewModel.laborFee,
@@ -129,7 +129,7 @@ struct NewJobView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                fieldLabel("Notlar")
+                FormLabel(title: "Notlar")
                 TextEditor(text: $viewModel.notes)
                     .frame(minHeight: 90)
                     .padding(12)
@@ -600,32 +600,6 @@ struct NewJobView: View {
         Rectangle()
             .fill(Color.gray.opacity(0.12))
             .frame(width: 1, height: 44)
-    }
-
-    private func inputField(
-        title: String,
-        placeholder: String,
-        text: Binding<String>,
-        keyboardType: UIKeyboardType = .default
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            fieldLabel(title)
-
-            TextField(placeholder, text: text)
-                .keyboardType(keyboardType)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .background(Color(red: 0.97, green: 0.97, blue: 0.96))
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        }
-    }
-
-    private func fieldLabel(_ title: String) -> some View {
-        Text(title)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
     }
 
     private func infoCard(icon: String, title: String, message: String, color: Color) -> some View {

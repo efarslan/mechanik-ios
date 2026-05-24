@@ -11,8 +11,22 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var activeMembers: [TeamMember] = []
     @Published private(set) var pendingMembers: [TeamMember] = []
 
-    @Published var businessNameDraft = ""
-    @Published var newBusinessName = ""
+    @Published var businessNameDraft = "" {
+        didSet {
+            let filteredName = Self.filteredBusinessName(businessNameDraft)
+            if filteredName != businessNameDraft {
+                businessNameDraft = filteredName
+            }
+        }
+    }
+    @Published var newBusinessName = "" {
+        didSet {
+            let filteredName = Self.filteredBusinessName(newBusinessName)
+            if filteredName != newBusinessName {
+                newBusinessName = filteredName
+            }
+        }
+    }
     @Published var pendingRoles: [String: String] = [:]
 
     @Published var resetPasswordMessage: SettingsAlertMessage?
@@ -24,6 +38,11 @@ final class SettingsViewModel: ObservableObject {
     @Published var isSavingRoles = false
     @Published var isRefreshingInviteCode = false
     @Published var isSendingPasswordReset = false
+
+    private static let businessNameLengthRange = 3...50
+    private static let allowedBusinessNameCharacters = CharacterSet.letters
+        .union(.decimalDigits)
+        .union(CharacterSet(charactersIn: "."))
 
     private let service: SettingsService
     private var currentUser: User?
@@ -84,8 +103,12 @@ final class SettingsViewModel: ObservableObject {
 
     func createBusiness(user: User?) async {
         guard let user else { return }
-        let name = newBusinessName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
+        let name = normalizedBusinessName(newBusinessName)
+        newBusinessName = name
+        guard Self.businessNameLengthRange.contains(name.count) else {
+            errorMessage = SettingsAlertMessage(title: "Hata", message: "İşletme adı 3-50 karakter olmalı; sadece harf, rakam ve nokta içerebilir.")
+            return
+        }
 
         isCreatingBusiness = true
         defer { isCreatingBusiness = false }
@@ -102,8 +125,13 @@ final class SettingsViewModel: ObservableObject {
 
     func saveBusinessName() async {
         guard canEditBusinessName, let business else { return }
-        let name = businessNameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, name != business.name else { return }
+        let name = normalizedBusinessName(businessNameDraft)
+        businessNameDraft = name
+        guard Self.businessNameLengthRange.contains(name.count) else {
+            errorMessage = SettingsAlertMessage(title: "Hata", message: "İşletme adı 3-50 karakter olmalı; sadece harf, rakam ve nokta içerebilir.")
+            return
+        }
+        guard name != business.name else { return }
 
         isSavingName = true
         defer { isSavingName = false }
@@ -213,6 +241,19 @@ final class SettingsViewModel: ObservableObject {
 
     func discardPendingRoles() {
         pendingRoles = [:]
+    }
+
+    private static func filteredBusinessName(_ name: String) -> String {
+        let allowedScalars = name.unicodeScalars.filter {
+            allowedBusinessNameCharacters.contains($0)
+        }
+        let filteredName = String(String.UnicodeScalarView(allowedScalars))
+        guard filteredName.count > businessNameLengthRange.upperBound else { return filteredName }
+        return String(filteredName.prefix(businessNameLengthRange.upperBound))
+    }
+
+    private func normalizedBusinessName(_ name: String) -> String {
+        Self.filteredBusinessName(name.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     private func observeMembersIfNeeded(user: User) {

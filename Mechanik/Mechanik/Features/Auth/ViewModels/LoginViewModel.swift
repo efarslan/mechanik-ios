@@ -63,12 +63,12 @@ final class LoginViewModel: ObservableObject {
             switch mode {
             case .signIn:
                 let user = try await authService.login(email: normalizedEmail, password: password)
-                appState.login(user: user, selectedTab: 0)
+                await appState.login(user: user, selectedTab: 0)
             case .owner:
                 let user = try await authService.register(email: normalizedEmail, password: password, name: normalizedName(name))
                 try await authService.sendEmailVerification()
                 successMessage = "Hesap oluşturuldu. Doğrulama e-postası gönderildi."
-                appState.login(user: user, selectedTab: 2)
+                await appState.login(user: user, selectedTab: 0)
             }
         } catch {
             await handleSubmitError(error, normalizedEmail: normalizedEmail)

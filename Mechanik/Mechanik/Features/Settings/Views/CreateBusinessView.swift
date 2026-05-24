@@ -16,6 +16,15 @@ struct CreateBusinessView: View {
     let onCreate: () -> Void
     let onLogout: () -> Void
 
+    private static let businessNameLengthRange = 3...50
+    private static let allowedBusinessNameCharacters = CharacterSet.letters
+        .union(.decimalDigits)
+        .union(CharacterSet(charactersIn: "."))
+
+    private var isBusinessNameValid: Bool {
+        Self.businessNameLengthRange.contains(businessName.count)
+    }
+
     var body: some View {
 
         VStack(spacing: 12) {
@@ -32,17 +41,15 @@ struct CreateBusinessView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            TextField("İşletme adı", text: $businessName)
-                .textInputAutocapitalization(.words)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(.white)
-                .clipShape(
-                    RoundedRectangle(
-                        cornerRadius: 12,
-                        style: .continuous
-                    )
-                )
+            AppTextField(title: "İşletme Adı", placeholder: "İşletme Adı 3-50 Karakter Olmalıdır", text: $businessName)
+            
+            HStack {
+                Spacer()
+
+                Text("\(businessName.count)/50")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
 
             Button {
                 onCreate()
@@ -59,12 +66,7 @@ struct CreateBusinessView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(Color.black.opacity(0.85))
-            .disabled(
-                isCreating
-                || businessName.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ).isEmpty
-            )
+            .disabled(isCreating || !isBusinessNameValid)
 
             Button(
                 "Çıkış Yap",
@@ -83,5 +85,27 @@ struct CreateBusinessView: View {
             )
         )
         .padding(.horizontal, 16)
+        
+        .onChange(of: businessName) { _, newValue in
+            let filteredName = Self.filteredBusinessName(newValue)
+            if filteredName != newValue {
+                businessName = filteredName
+            }
+        }
     }
+
+    private static func filteredBusinessName(_ name: String) -> String {
+        let allowedScalars = name.unicodeScalars.filter {
+            allowedBusinessNameCharacters.contains($0)
+        }
+        let filteredName = String(String.UnicodeScalarView(allowedScalars))
+        guard filteredName.count > businessNameLengthRange.upperBound else { return filteredName }
+        return String(filteredName.prefix(businessNameLengthRange.upperBound))
+    }
+    
+}
+
+#Preview {
+    BusinessSetupGateView()
+        .environmentObject(AppState())
 }

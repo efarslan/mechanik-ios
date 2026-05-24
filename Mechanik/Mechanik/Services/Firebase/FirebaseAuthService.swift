@@ -55,6 +55,12 @@ final class FirebaseAuthService {
         return mapUser(firebaseUser)
     }
 
+    func reloadCurrentUser() async throws -> User? {
+        guard let firebaseUser = Auth.auth().currentUser else { return nil }
+        try await firebaseUser.reload()
+        return Auth.auth().currentUser.map(mapUser)
+    }
+
     func addAuthStateListener(_ listener: @escaping (User?) -> Void) -> NSObjectProtocol {
         Auth.auth().addStateDidChangeListener { _, firebaseUser in
             listener(firebaseUser.map(self.mapUser))

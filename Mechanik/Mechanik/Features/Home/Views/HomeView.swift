@@ -23,10 +23,16 @@ struct HomeView: View {
             .background(Color(red: 0.97, green: 0.97, blue: 0.96))
             .navigationBarTitleDisplayMode(.large)
             .refreshable {
-                await viewModel.reload()
+                await appState.refreshCurrentUser()
+                await viewModel.load(user: appState.currentUser)
             }
             .task {
                 await viewModel.load(user: appState.currentUser)
+            }
+            .onChange(of: appState.currentUser?.emailVerified) { _, _ in
+                Task {
+                    await viewModel.load(user: appState.currentUser)
+                }
             }
             .navigationDestination(isPresented: $isNavigatingToNewVehicle) {
                 NewVehicleView(didCreateVehicle: {

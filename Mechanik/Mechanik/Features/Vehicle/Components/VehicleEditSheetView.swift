@@ -27,14 +27,14 @@ struct VehicleEditSheetView: View {
                     )
                 }
 
-                AppInputField(
+                AppTextField(
                     title: "Araç Sahibi",
                     placeholder: "Ad Soyad",
                     text: $viewModel.ownerName,
                     error: viewModel.editErrors.ownerName
                 )
 
-                AppInputField(
+                AppTextField(
                     title: "Telefon",
                     placeholder: "0555 123 45 67",
                     text: $viewModel.ownerPhone,
@@ -42,7 +42,7 @@ struct VehicleEditSheetView: View {
                     error: viewModel.editErrors.ownerPhone
                 )
 
-                AppInputField(
+                AppTextField(
                     title: "Motor Hacmi",
                     placeholder: viewModel.fuelType == .electric
                         ? "Elektrikli araçta geçerli değil"
@@ -53,14 +53,14 @@ struct VehicleEditSheetView: View {
                     isDisabled: viewModel.fuelType == .electric
                 )
 
-                AppInputField(
+                AppTextField(
                     title: "Şasi No",
                     placeholder: "17 karakter",
                     text: $viewModel.chassisNo,
                     error: viewModel.editErrors.chassisNo
                 )
 
-                AppInputField(
+                AppTextField(
                     title: "Model Yılı",
                     placeholder: "2024",
                     text: $viewModel.year,

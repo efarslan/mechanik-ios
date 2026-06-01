@@ -4,7 +4,7 @@ Native iOS client for the **Mechanik** automotive workshop platform. Manage vehi
 
 ---
 
-## 📌 Overview
+## Overview
 
 This app digitizes day-to-day workshop operations on mobile: vehicles, service jobs, costing, and a home dashboard with KPIs and trends.
 
@@ -12,22 +12,22 @@ The goal matches the web product — structured, traceable service history inste
 
 ---
 
-## ⚙️ Features
+## Features
 
-### 🏢 Business Management
+### Business Management
 
 - Create and manage a business account
 - Join businesses via invitation code
 - Role-based access (Owner / Employee)
 - Team and business settings
 
-### 🚗 Vehicle Management
+### Vehicle Management
 
 - Register vehicles with customer information
 - Structured vehicle history and detail views
 - Service records per vehicle with filtering
 
-### 🔧 Service Operations
+### Service Operations
 
 - Create detailed service jobs (maintenance, repair, diagnostics)
 - Predefined and custom service categories
@@ -35,14 +35,14 @@ The goal matches the web product — structured, traceable service history inste
 - Attach images for documentation
 - Full lifecycle tracking (Active → Completed)
 
-### 💰 Cost Management
+### Cost Management
 
 - Parts, quantities, and unit prices per job
 - Automatic total cost calculation
 - Separate labor and parts tracking
 - Transparent per-job cost breakdown
 
-### 📊 Home Dashboard
+### Home Dashboard
 
 - Active job monitoring and alerts
 - Recent jobs with quick access to details
@@ -51,7 +51,7 @@ The goal matches the web product — structured, traceable service history inste
 
 ---
 
-## 🧠 Problem It Solves
+## Problem It Solves
 
 - No structured service history on the shop floor
 - Hard to look up past maintenance while with a customer or at a vehicle
@@ -60,7 +60,7 @@ The goal matches the web product — structured, traceable service history inste
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Swift** & **SwiftUI**
 - **Swift Charts** (dashboard analytics)
@@ -69,7 +69,7 @@ The goal matches the web product — structured, traceable service history inste
 
 ---
 
-## 🔗 Related Project
+## Related Project
 
 | Platform | Repository |
 |----------|------------|
@@ -80,19 +80,17 @@ Business analysis and QA documentation live in the web repository under `docs/ba
 
 ---
 
-## 📄 Documentation
+## Documentation
 
 Structured BA and QA docs ship with the web project:
 
-### Business Analysis
-
-- System overview, personas, and epics → `docs/ba/` (web repo)
+**Business Analysis**
+- System overview, personas, and epics → `docs/ba/`
 - Feature specs (Vehicle, Service, Reporting) → `docs/ba/features/`
 - Process flow diagrams → `docs/ba/diagrams/`
 
-### Quality Assurance
-
-- Feature-level test cases → `docs/qa/` (web repo)
+**Quality Assurance**
+- Feature-level test cases → `docs/qa/`
 - Cross-module integration tests → `docs/qa/cross-module-tests.md`
 - System-level scenarios → `docs/qa/system_testcases.md`
 
@@ -100,11 +98,11 @@ Structured BA and QA docs ship with the web project:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- macOS with **Xcode** (version that supports the project’s iOS deployment target)
+- macOS with **Xcode** (version that supports the project's iOS deployment target)
 - An Apple Developer account (for device testing; Simulator is enough for local dev)
 - A Firebase project shared with the web app (Auth, Firestore, Storage enabled)
 
@@ -127,7 +125,7 @@ Structured BA and QA docs ship with the web project:
 
 4. In Xcode, select the **Mechanik** scheme and a simulator or connected device, then **Run** (⌘R). Swift Package Manager will resolve **firebase-ios-sdk** on first build.
 
-### First launch flow
+### First Launch Flow
 
 1. Sign in or register (Firebase Auth)
 2. Verify email when prompted
@@ -136,53 +134,51 @@ Structured BA and QA docs ship with the web project:
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-App screenshots live in [`docs/screenshots/`](docs/screenshots/) (not in `Assets.xcassets` — those are for in-app assets only). Files named with `-1`, `-2`, `-3` are sequential captures of the same screen when the content did not fit in a single shot.
+### Authentication & Onboarding
 
-### Authentication
+<p align="center">
+  <img src="docs/screenshots/signup.png" width="220" />
+  <img src="docs/screenshots/create-business.png" width="220" />
+</p>
 
-![Sign up](docs/screenshots/signup.png)
+### Home & Analytics
 
-### Business onboarding
-
-![Create or join a business](docs/screenshots/create-business.png)
-
-### Home & analytics
-
-![Home dashboard](docs/screenshots/home.png)
-
-Home KPI section (long scroll — shown in order across two captures):
-
-![Home KPIs (1/2)](docs/screenshots/kpi-1.png)
-
-![Home KPIs (2/2)](docs/screenshots/kpi-2.png)
+<p align="center">
+  <img src="docs/screenshots/home.png" width="220" />
+  <img src="docs/screenshots/kpi-1.png" width="220" />
+  <img src="docs/screenshots/kpi-2.png" width="220" />
+</p>
 
 ### Vehicles
 
-![Vehicle list](docs/screenshots/vehicles.png)
+<p align="center">
+  <img src="docs/screenshots/vehicles.png" width="220" />
+  <img src="docs/screenshots/vehicle-detail.png" width="220" />
+</p>
 
-![Vehicle detail and service history](docs/screenshots/vehicle-detail.png)
+### Service Jobs
 
-### Service jobs
+<p align="center">
+  <img src="docs/screenshots/new-job-1.png" width="220" />
+  <img src="docs/screenshots/new-job-2.png" width="220" />
+  <img src="docs/screenshots/new-job-3.png" width="220" />
+</p>
 
-New job form (long scroll — shown in order across three captures):
-
-![New job (1/3)](docs/screenshots/new-job-1.png)
-
-![New job (2/3)](docs/screenshots/new-job-2.png)
-
-![New job (3/3)](docs/screenshots/new-job-3.png)
-
-![Job details](docs/screenshots/job-details.png)
+<p align="center">
+  <img src="docs/screenshots/job-details.png" width="220" />
+</p>
 
 ### Team
 
-![Team and roles](docs/screenshots/team.png)
+<p align="center">
+  <img src="docs/screenshots/team.png" width="220" />
+</p>
 
 ---
 
-## 🤖 AI Usage
+## AI Usage
 
 AI tools were used as a development assistant for productivity and debugging support.
 
@@ -190,12 +186,12 @@ Architecture decisions, system design, and implementation logic were fully contr
 
 ---
 
-## 📌 Status
+## Status
 
 This project is under **active development**. New features and improvements are added continuously and kept in sync with the web platform where it makes sense.
 
 ---
 
-## 📬 Feedback
+## Feedback
 
 Feedback, suggestions, and improvements are welcome — open an issue or reach out via the repository.

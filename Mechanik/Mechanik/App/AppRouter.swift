@@ -27,6 +27,8 @@ struct AppRouter: View {
                     EmailVerificationGateView()
                 case .businessSetup:
                     BusinessSetupGateView()
+                case .pendingApproval:
+                    PendingApprovalGateView()
                 case .mainTabs:
                     MainTabView()
                 }

@@ -16,25 +16,31 @@ struct SettingsView: View {
                     
                     LoadingStateView()
                 } else if viewModel.business == nil {
-                    
-                    CreateBusinessView(
+                    BusinessOnboardingView(
                         businessName: $viewModel.newBusinessName,
+                        inviteCode: $viewModel.inviteCode,
                         businessNameError: viewModel.businessNameError,
+                        inviteCodeError: viewModel.inviteCodeError,
+                        generalError: viewModel.onboardingErrorMessage,
                         isCreating: viewModel.isCreatingBusiness,
-                        
+                        isJoining: viewModel.isJoiningBusiness,
+                        showsLogout: true,
                         onCreate: {
                             Task {
-                                await viewModel.createBusiness(
-                                    user: appState.currentUser
-                                )
+                                await viewModel.createBusiness(user: appState.currentUser)
+                                await appState.markBusinessSetupCompleted()
                             }
                         },
-                        
+                        onJoin: {
+                            Task {
+                                await viewModel.joinBusiness(user: appState.currentUser)
+                                await appState.markBusinessSetupCompleted()
+                            }
+                        },
                         onLogout: {
                             appState.logout()
                         }
                     )
-                    
                 } else {
                     settingsContent
                 }

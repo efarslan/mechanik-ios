@@ -17,7 +17,7 @@ enum FieldValidator {
 
     private static let allowedBusinessNameCharacters = CharacterSet.letters
         .union(.decimalDigits)
-        .union(CharacterSet(charactersIn: "."))
+        .union(CharacterSet(charactersIn: ". "))
 
     // MARK: - Auth
 
@@ -80,7 +80,10 @@ enum FieldValidator {
         let allowedScalars = name.unicodeScalars.filter {
             allowedBusinessNameCharacters.contains($0)
         }
-        let filteredName = String(String.UnicodeScalarView(allowedScalars))
+        var filteredName = String(String.UnicodeScalarView(allowedScalars))
+        while filteredName.first == " " {
+            filteredName.removeFirst()
+        }
         guard filteredName.count > businessNameLengthRange.upperBound else { return filteredName }
         return String(filteredName.prefix(businessNameLengthRange.upperBound))
     }
@@ -91,7 +94,32 @@ enum FieldValidator {
             return "İşletme adı zorunludur."
         }
         if !businessNameLengthRange.contains(trimmed.count) {
-            return "İşletme adı 3-50 karakter olmalı; sadece harf, rakam ve nokta içerebilir."
+            return "İşletme adı 3-50 karakter olmalı; sadece harf, rakam, boşluk ve nokta içerebilir."
+        }
+        return nil
+    }
+
+    static func filteredInviteCodeInput(_ input: String) -> String {
+        let chars = input.uppercased().filter { $0.isLetter || $0.isNumber }
+        let capped = String(chars.prefix(8))
+        guard capped.count > 4 else { return capped }
+        let index = capped.index(capped.startIndex, offsetBy: 4)
+        return "\(capped[..<index])-\(capped[index...])"
+    }
+
+    static func normalizedInviteCode(_ input: String) -> String? {
+        let chars = input.filter { $0.isLetter || $0.isNumber }.uppercased()
+        guard chars.count == 8 else { return nil }
+        let index = chars.index(chars.startIndex, offsetBy: 4)
+        return "\(chars[..<index])-\(chars[index...])"
+    }
+
+    static func inviteCodeError(_ input: String) -> String? {
+        if input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "Davet kodu zorunludur."
+        }
+        if normalizedInviteCode(input) == nil {
+            return "Davet kodu 8 karakter olmalıdır (XXXX-XXXX)."
         }
         return nil
     }

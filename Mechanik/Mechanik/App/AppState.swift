@@ -16,6 +16,7 @@ final class AppState: ObservableObject {
         case resolvingSession
         case emailVerification
         case businessSetup
+        case pendingApproval
         case mainTabs
     }
 
@@ -24,6 +25,7 @@ final class AppState: ObservableObject {
     @Published private(set) var isLoggedIn: Bool = false
     @Published var currentUser: User?
     @Published private(set) var currentBusinessId: String?
+    @Published private(set) var pendingBusinessName: String?
     @Published var selectedTab: Int = 0
 
     private let authService: FirebaseAuthService
@@ -135,28 +137,38 @@ final class AppState: ObservableObject {
             route = .resolvingSession
         }
 
-        do {
-            currentBusinessId = try await businessService.fetchCurrentBusinessId(
-                userId: user.id,
-                email: user.email,
-                name: user.name
-            )
-        } catch {
-            currentBusinessId = nil
-        }
-
         guard user.emailVerified else {
+            currentBusinessId = nil
+            pendingBusinessName = nil
             route = .emailVerification
             return
         }
 
-        guard currentBusinessId != nil else {
+        do {
+            switch try await businessService.resolveMembership(
+                userId: user.id,
+                email: user.email,
+                name: user.name
+            ) {
+            case .active(let businessId):
+                currentBusinessId = businessId
+                pendingBusinessName = nil
+                route = .mainTabs
+                self.selectedTab = selectedTab
+            case .pending(_, let businessName):
+                currentBusinessId = nil
+                pendingBusinessName = businessName
+                route = .pendingApproval
+            case .none:
+                currentBusinessId = nil
+                pendingBusinessName = nil
+                route = .businessSetup
+            }
+        } catch {
+            currentBusinessId = nil
+            pendingBusinessName = nil
             route = .businessSetup
-            return
         }
-
-        route = .mainTabs
-        self.selectedTab = selectedTab
     }
 
     private func applySignedOutState() {
@@ -165,6 +177,7 @@ final class AppState: ObservableObject {
         route = .login
         isAuthResolved = true
         currentBusinessId = nil
+        pendingBusinessName = nil
         selectedTab = 0
     }
 }

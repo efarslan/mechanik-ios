@@ -26,7 +26,7 @@ struct RecentJobsSectionView: View {
             VStack(alignment: .leading, spacing: 14) {
 
                 HStack {
-                    Text("Son İşler")
+                    Text("Son İşlemler")
                         .font(.headline)
 
                     Spacer()

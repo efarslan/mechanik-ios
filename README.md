@@ -136,6 +136,52 @@ Structured BA and QA docs ship with the web project:
 
 ---
 
+## 📸 Screenshots
+
+App screenshots live in [`docs/screenshots/`](docs/screenshots/) (not in `Assets.xcassets` — those are for in-app assets only). Files named with `-1`, `-2`, `-3` are sequential captures of the same screen when the content did not fit in a single shot.
+
+### Authentication
+
+![Sign up](docs/screenshots/signup.png)
+
+### Business onboarding
+
+![Create or join a business](docs/screenshots/create-business.png)
+
+### Home & analytics
+
+![Home dashboard](docs/screenshots/home.png)
+
+Home KPI section (long scroll — shown in order across two captures):
+
+![Home KPIs (1/2)](docs/screenshots/kpi-1.png)
+
+![Home KPIs (2/2)](docs/screenshots/kpi-2.png)
+
+### Vehicles
+
+![Vehicle list](docs/screenshots/vehicles.png)
+
+![Vehicle detail and service history](docs/screenshots/vehicle-detail.png)
+
+### Service jobs
+
+New job form (long scroll — shown in order across three captures):
+
+![New job (1/3)](docs/screenshots/new-job-1.png)
+
+![New job (2/3)](docs/screenshots/new-job-2.png)
+
+![New job (3/3)](docs/screenshots/new-job-3.png)
+
+![Job details](docs/screenshots/job-details.png)
+
+### Team
+
+![Team and roles](docs/screenshots/team.png)
+
+---
+
 ## 🤖 AI Usage
 
 AI tools were used as a development assistant for productivity and debugging support.

@@ -13,33 +13,101 @@ final class BusinessService {
     
     private let db = Firestore.firestore()
     
-    /// Web parity: `BusinessProvider` / `fetchBusiness` — invites first, then owner, then member.
-    func fetchCurrentBusinessId(userId: String, email: String?, name: String? = nil) async throws -> String? {
+    /// Web parity: `BusinessProvider` / `fetchBusiness` — email invites, then owner, then active member.
+    func resolveMembership(userId: String, email: String?, name: String? = nil) async throws -> MembershipResolution {
         await acceptPendingInvitesIfNeeded(userId: userId, email: email, name: name)
-        
-        // 1) Owner
+
         let ownedSnapshot = try await db.collection("businesses")
             .whereField("ownerId", isEqualTo: userId)
             .limit(to: 3)
             .getDocuments()
-        
+
         if let doc = ownedSnapshot.documents.first {
-            return doc.documentID
+            return .active(businessId: doc.documentID)
         }
-        
-        // 2) Active member
-        let membersSnapshot = try await db.collectionGroup("members")
+
+        let activeMembersSnapshot = try await db.collectionGroup("members")
             .whereField("userId", isEqualTo: userId)
             .whereField("status", isEqualTo: "active")
             .limit(to: 3)
             .getDocuments()
-        
-        if let doc = membersSnapshot.documents.first,
-           let businessRef = doc.reference.parent.parent {
-            return businessRef.documentID
+
+        if let doc = activeMembersSnapshot.documents.first,
+           let businessId = doc.reference.parent.parent?.documentID {
+            return .active(businessId: businessId)
         }
-        
-        return nil
+
+        let pendingMembersSnapshot = try await db.collectionGroup("members")
+            .whereField("userId", isEqualTo: userId)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
+            .getDocuments()
+
+        if let doc = pendingMembersSnapshot.documents.first,
+           let businessId = doc.reference.parent.parent?.documentID {
+            let businessName = try? await fetchBusinessName(businessId: businessId)
+            return .pending(businessId: businessId, businessName: businessName)
+        }
+
+        return .none
+    }
+
+    func fetchCurrentBusinessId(userId: String, email: String?, name: String? = nil) async throws -> String? {
+        switch try await resolveMembership(userId: userId, email: email, name: name) {
+        case .active(let businessId):
+            return businessId
+        case .pending, .none:
+            return nil
+        }
+    }
+
+    func joinBusinessWithInviteCode(_ rawCode: String, user: User) async throws -> String {
+        guard let code = FieldValidator.normalizedInviteCode(rawCode) else {
+            throw BusinessJoinError.invalidInviteCode
+        }
+
+        let snapshot = try await db.collection("businesses")
+            .whereField("inviteCode", isEqualTo: code)
+            .limit(to: 1)
+            .getDocuments()
+
+        guard let businessDoc = snapshot.documents.first else {
+            throw BusinessJoinError.businessNotFound
+        }
+
+        let businessId = businessDoc.documentID
+
+        var memberData: [String: Any] = [
+            "userId": user.id,
+            "role": "technician",
+            "status": "pending",
+            "email": user.email,
+            "createdAt": FieldValue.serverTimestamp(),
+            "updatedAt": FieldValue.serverTimestamp(),
+        ]
+
+        if let memberName = user.name?.trimmingCharacters(in: .whitespacesAndNewlines), !memberName.isEmpty {
+            memberData["name"] = memberName
+        }
+
+        try await db.collection("businesses")
+            .document(businessId)
+            .collection("members")
+            .document(user.id)
+            .setData(memberData, merge: true)
+
+        return businessId
+    }
+
+    func cancelPendingMembership(userId: String) async throws {
+        let snapshot = try await db.collectionGroup("members")
+            .whereField("userId", isEqualTo: userId)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
+            .getDocuments()
+
+        guard let memberDoc = snapshot.documents.first else { return }
+        try await memberDoc.reference.delete()
     }
 
     func fetchVehicleCreateAccess(userId: String, email: String?, name: String? = nil) async throws -> VehicleCreateAccess? {

@@ -101,7 +101,7 @@ struct LoginView: View {
 
                 Text(viewModel.mode == .signIn
                      ? "Hesabınıza giriş yaparak paneli kullanmaya devam edin."
-                     : "Kayıt olduktan sonra işletme bilgilerinizi ekleyerek başlayın.")
+                     : "Kayıt olduktan sonra işletme oluşturabilir veya davet kodu ile katılabilirsiniz.")
                     .font(.callout)
                     .foregroundStyle(Color.black.opacity(0.58))
             }

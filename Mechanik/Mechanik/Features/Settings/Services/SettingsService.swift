@@ -32,6 +32,14 @@ final class SettingsService {
         )
     }
 
+    func joinBusiness(inviteCode: String, user: User) async throws {
+        _ = try await businessService.joinBusinessWithInviteCode(inviteCode, user: user)
+    }
+
+    func cancelPendingMembership(userId: String) async throws {
+        try await businessService.cancelPendingMembership(userId: userId)
+    }
+
     func createBusiness(name: String, user: User) async throws {
         let inviteCode = Self.generateInviteCode()
         let businessRef = db.collection("businesses").document()

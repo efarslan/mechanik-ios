@@ -3,8 +3,11 @@ import SwiftUI
 struct BusinessSetupGateView: View {
     @EnvironmentObject private var appState: AppState
     @State private var businessName = ""
+    @State private var inviteCode = ""
     @State private var isCreating = false
+    @State private var isJoining = false
     @State private var businessNameError: String?
+    @State private var inviteCodeError: String?
     @State private var errorMessage: String?
 
     private let service = SettingsService()
@@ -13,25 +16,25 @@ struct BusinessSetupGateView: View {
         VStack(spacing: 18) {
             Spacer()
 
-            CreateBusinessView(
+            BusinessOnboardingView(
                 businessName: $businessName,
+                inviteCode: $inviteCode,
                 businessNameError: businessNameError,
+                inviteCodeError: inviteCodeError,
+                generalError: errorMessage,
                 isCreating: isCreating,
+                isJoining: isJoining,
+                showsLogout: true,
                 onCreate: {
                     Task { await createBusiness() }
+                },
+                onJoin: {
+                    Task { await joinBusiness() }
                 },
                 onLogout: {
                     appState.logout()
                 }
             )
-
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-            }
 
             Spacer()
         }
@@ -59,6 +62,26 @@ struct BusinessSetupGateView: View {
         }
 
         isCreating = false
+    }
+
+    private func joinBusiness() async {
+        guard let user = appState.currentUser else { return }
+        inviteCodeError = FieldValidator.inviteCodeError(inviteCode)
+        guard inviteCodeError == nil, !isJoining else { return }
+
+        isJoining = true
+        errorMessage = nil
+
+        do {
+            try await service.joinBusiness(inviteCode: inviteCode, user: user)
+            await appState.markBusinessSetupCompleted()
+        } catch let error as BusinessJoinError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = "Davet kodu ile katılım sırasında hata oluştu."
+        }
+
+        isJoining = false
     }
 }
 

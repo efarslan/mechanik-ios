@@ -27,7 +27,18 @@ final class SettingsViewModel: ObservableObject {
             }
         }
     }
+    @Published var inviteCode = "" {
+        didSet {
+            let filtered = FieldValidator.filteredInviteCodeInput(inviteCode)
+            if filtered != inviteCode {
+                inviteCode = filtered
+            }
+        }
+    }
     @Published var businessNameError: String?
+    @Published var inviteCodeError: String?
+    @Published var onboardingErrorMessage: String?
+    @Published var isJoiningBusiness = false
     @Published var pendingRoles: [String: String] = [:]
 
     @Published var resetPasswordMessage: SettingsAlertMessage?
@@ -106,6 +117,7 @@ final class SettingsViewModel: ObservableObject {
             return
         }
         businessNameError = nil
+        onboardingErrorMessage = nil
 
         isCreatingBusiness = true
         defer { isCreatingBusiness = false }
@@ -116,7 +128,27 @@ final class SettingsViewModel: ObservableObject {
             await load(user: user)
             infoMessage = SettingsAlertMessage(title: "Başarılı", message: "İşletme oluşturuldu.")
         } catch {
-            errorMessage = SettingsAlertMessage(title: "Hata", message: "İşletme oluşturulamadı.")
+            onboardingErrorMessage = "İşletme oluşturulamadı."
+        }
+    }
+
+    func joinBusiness(user: User?) async {
+        guard let user else { return }
+        inviteCodeError = FieldValidator.inviteCodeError(inviteCode)
+        guard inviteCodeError == nil else { return }
+
+        onboardingErrorMessage = nil
+        isJoiningBusiness = true
+        defer { isJoiningBusiness = false }
+
+        do {
+            try await service.joinBusiness(inviteCode: inviteCode, user: user)
+            inviteCode = ""
+            await load(user: user)
+        } catch let error as BusinessJoinError {
+            onboardingErrorMessage = error.errorDescription
+        } catch {
+            onboardingErrorMessage = "Davet kodu ile katılım sırasında hata oluştu."
         }
     }
 

@@ -13,6 +13,7 @@ final class NewVehicleViewModel: ObservableObject {
         var ownerName: String?
         var ownerPhone: String?
         var chassisNo: String?
+        var notes: String?
 
         var hasErrors: Bool {
             plate != nil
@@ -23,6 +24,20 @@ final class NewVehicleViewModel: ObservableObject {
                 || ownerName != nil
                 || ownerPhone != nil
                 || chassisNo != nil
+                || notes != nil
+        }
+
+        var firstInvalidAnchor: FormFieldAnchor? {
+            if plate != nil { return .plate }
+            if brand != nil { return .brand }
+            if model != nil { return .model }
+            if year != nil { return .year }
+            if engineSize != nil { return .engineSize }
+            if chassisNo != nil { return .chassisNo }
+            if ownerName != nil { return .ownerName }
+            if ownerPhone != nil { return .ownerPhone }
+            if notes != nil { return .notes }
+            return nil
         }
     }
 
@@ -43,6 +58,7 @@ final class NewVehicleViewModel: ObservableObject {
     @Published private(set) var isSaving: Bool = false
     @Published private(set) var access: VehicleCreateAccess?
     @Published var errors = FormErrors()
+    @Published var focusFieldAnchor: FormFieldAnchor?
     @Published var infoMessage: String?
     @Published var errorMessage: String?
 
@@ -120,62 +136,22 @@ final class NewVehicleViewModel: ObservableObject {
 
     func validate() -> FormErrors {
         var nextErrors = FormErrors()
-        let normalizedPlate = plate.replacingOccurrences(of: " ", with: "").uppercased()
-        let trimmedYear = year.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedEngineSize = engineSize.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedChassisNo = chassisNo.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        let normalizedPhone = ownerPhone.replacingOccurrences(of: "[\\s()-]", with: "", options: .regularExpression)
 
-        if normalizedPlate.isEmpty {
-            nextErrors.plate = "Plaka zorunludur."
-        } else if normalizedPlate.range(of: #"^\d{2}[A-Z]{1,3}\d{2,4}$"#, options: .regularExpression) == nil {
-            nextErrors.plate = "Geçerli plaka giriniz. Örnek: 34ABC123"
-        }
-
-        if brandId.isEmpty {
-            nextErrors.brand = "Marka Seçiniz."
-        }
-
-        if model.isEmpty {
-            nextErrors.model = "Model Seçiniz."
-        }
-
-        if trimmedYear.isEmpty {
-            nextErrors.year = "Model yılı zorunludur."
-        } else if trimmedYear.range(of: #"^\d{4}$"#, options: .regularExpression) == nil {
-            nextErrors.year = "4 haneli yıl giriniz."
-        } else if let yearValue = Int(trimmedYear), yearValue < minYear || yearValue > maxYear {
-            nextErrors.year = "Yıl \(minYear)-\(maxYear) arasında olmalıdır."
-        }
-
-        if !shouldHideEngineSize {
-            if trimmedEngineSize.isEmpty {
-                nextErrors.engineSize = "Motor hacmi zorunludur."
-            } else if trimmedEngineSize.range(of: #"^\d\.\d{1,2}$"#, options: .regularExpression) == nil {
-                nextErrors.engineSize = "Ondalıklı format kullanın. Ornek: 1.6"
-            }
-        }
-
-        if !trimmedChassisNo.isEmpty {
-            if trimmedChassisNo.count != 17 {
-                nextErrors.chassisNo = "Şasi numarası tam 17 karakter olmalıdır."
-            } else if trimmedChassisNo.range(of: #"[IOQ]"#, options: .regularExpression) != nil {
-                nextErrors.chassisNo = "Şasi numarasında I, O ve Q kullanilamaz."
-            } else if trimmedChassisNo.range(of: #"^[A-HJ-NPR-Z0-9]{17}$"#, options: .regularExpression) == nil {
-                nextErrors.chassisNo = "Şasi numarası sadece harf ve rakam içermelidir."
-            }
-        }
-
-        if ownerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            nextErrors.ownerName = "Araç sahibi adı zorunludur."
-        }
-
-        if !normalizedPhone.isEmpty,
-           normalizedPhone.range(of: #"^(\+90|0)?[5][0-9]{9}$"#, options: .regularExpression) == nil {
-            nextErrors.ownerPhone = "Geçerli telefon numarası giriniz."
-        }
+        nextErrors.plate = FieldValidator.plateError(plate)
+        nextErrors.brand = brandId.isEmpty ? "Marka seçiniz." : nil
+        nextErrors.model = model.isEmpty ? "Model seçiniz." : nil
+        nextErrors.year = FieldValidator.yearError(year, minYear: minYear, maxYear: maxYear)
+        nextErrors.engineSize = FieldValidator.engineSizeError(
+            engineSize,
+            required: !shouldHideEngineSize
+        )
+        nextErrors.chassisNo = FieldValidator.chassisError(chassisNo)
+        nextErrors.ownerName = FieldValidator.ownerNameError(ownerName)
+        nextErrors.ownerPhone = FieldValidator.phoneError(ownerPhone)
+        nextErrors.notes = FieldValidator.notesError(notes)
 
         errors = nextErrors
+        focusFieldAnchor = nextErrors.firstInvalidAnchor
         return nextErrors
     }
 

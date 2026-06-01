@@ -6,6 +6,7 @@ struct NewVehicleView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = NewVehicleViewModel()
     @State private var hasLoaded = false
+    @State private var validationShake = 0
     let didCreateVehicle: (() -> Void)?
 
     init(didCreateVehicle: (() -> Void)? = nil) {
@@ -51,23 +52,33 @@ struct NewVehicleView: View {
     }
 
     private var formContent: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 16) {
-                if let errorMessage = viewModel.errorMessage {
-                    AppMessageCard(title: "Bir sorun var", message: errorMessage, color: .red)
-                }
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    if let errorMessage = viewModel.errorMessage {
+                        AppMessageCard(title: "Bir sorun var", message: errorMessage, color: .red)
+                    }
 
-                if let infoMessage = viewModel.infoMessage {
-                    AppMessageCard(title: "Bilgi", message: infoMessage, color: .orange)
-                }
+                    if let infoMessage = viewModel.infoMessage {
+                        AppMessageCard(title: "Bilgi", message: infoMessage, color: .orange)
+                    }
 
-                vehicleInfoSection
-                ownerSection
-                notesSection
-                footerButtons
+                    if viewModel.errors.hasErrors {
+                        FormValidationBanner(
+                            message: "Kırmızı ile işaretli alanları kontrol edin."
+                        )
+                    }
+
+                    vehicleInfoSection
+                    ownerSection
+                    notesSection
+                    footerButtons
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
+                .shake(trigger: validationShake)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 20)
+            .formScrollFocus(anchor: viewModel.focusFieldAnchor, proxy: proxy)
         }
     }
 
@@ -79,6 +90,7 @@ struct NewVehicleView: View {
                 text: $viewModel.plate,
                 error: viewModel.errors.plate
             )
+            .id(FormFieldAnchor.plate.rawValue)
             .onChange(of: viewModel.plate) { _, newValue in
                 viewModel.plate = newValue
                     .replacingOccurrences(of: "\\s+", with: "", options: .regularExpression)
@@ -88,7 +100,7 @@ struct NewVehicleView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                FormLabel(title: "Marka")
+                FormLabel(title: "Marka", isInvalid: viewModel.errors.brand != nil)
 
                 Menu {
                     ForEach(viewModel.brands) { brand in
@@ -99,15 +111,17 @@ struct NewVehicleView: View {
                 } label: {
                     AppPickerField(
                         title: viewModel.brands.first(where: { $0.id == viewModel.brandId })?.name ?? "Marka Seçin",
-                        isSelected: !viewModel.brandId.isEmpty
+                        isSelected: !viewModel.brandId.isEmpty,
+                        isInvalid: viewModel.errors.brand != nil
                     )
                 }
+                .id(FormFieldAnchor.brand.rawValue)
 
                 FormErrorText(message: viewModel.errors.brand)
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                FormLabel(title: "Model")
+                FormLabel(title: "Model", isInvalid: viewModel.errors.model != nil)
 
                 Menu {
                     ForEach(viewModel.models, id: \.self) { model in
@@ -118,10 +132,12 @@ struct NewVehicleView: View {
                 } label: {
                     AppPickerField(
                         title: viewModel.model.isEmpty ? (viewModel.brandId.isEmpty ? "Önce Marka Seçin" : "Model Seçin") : viewModel.model,
-                        isSelected: !viewModel.model.isEmpty
+                        isSelected: !viewModel.model.isEmpty,
+                        isInvalid: viewModel.errors.model != nil
                     )
                 }
                 .disabled(viewModel.brandId.isEmpty)
+                .id(FormFieldAnchor.model.rawValue)
 
                 FormErrorText(message: viewModel.errors.model)
             }
@@ -133,6 +149,7 @@ struct NewVehicleView: View {
                 keyboardType: .numberPad,
                 error: viewModel.errors.year
             )
+            .id(FormFieldAnchor.year.rawValue)
             .onChange(of: viewModel.year) { _, newValue in
                 viewModel.year = newValue.replacingOccurrences(of: "\\D", with: "", options: .regularExpression)
                     .prefix(4)
@@ -158,6 +175,7 @@ struct NewVehicleView: View {
                     keyboardType: .decimalPad,
                     error: viewModel.errors.engineSize
                 )
+                .id(FormFieldAnchor.engineSize.rawValue)
                 .onChange(of: viewModel.engineSize) { _, newValue in
                     let digits = newValue.replacingOccurrences(of: "\\D", with: "", options: .regularExpression)
                     if digits.isEmpty {
@@ -176,6 +194,7 @@ struct NewVehicleView: View {
                 text: $viewModel.chassisNo,
                 error: viewModel.errors.chassisNo
             )
+            .id(FormFieldAnchor.chassisNo.rawValue)
             .onChange(of: viewModel.chassisNo) { _, newValue in
                 viewModel.chassisNo = newValue.uppercased().prefix(17).description
             }
@@ -190,6 +209,7 @@ struct NewVehicleView: View {
                 text: $viewModel.ownerName,
                 error: viewModel.errors.ownerName
             )
+            .id(FormFieldAnchor.ownerName.rawValue)
 
             AppTextField(
                 title: "Telefon",
@@ -198,29 +218,29 @@ struct NewVehicleView: View {
                 keyboardType: .phonePad,
                 error: viewModel.errors.ownerPhone
             )
+            .id(FormFieldAnchor.ownerPhone.rawValue)
         }
     }
 
     private var notesSection: some View {
         formSection(title: "Notlar", subtitle: "Araç hakkında ek bilgi", step: 3) {
-            VStack(alignment: .leading, spacing: 8) {
-                FormLabel(title: "Notlar")
-
-                TextEditor(text: $viewModel.notes)
-                    .frame(minHeight: 100)
-                    .padding(12)
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            FormTextEditor(
+                title: "Notlar",
+                text: $viewModel.notes,
+                error: viewModel.errors.notes,
+                minHeight: 100
+            )
+            .id(FormFieldAnchor.notes.rawValue)
+            .onChange(of: viewModel.notes) { _, newValue in
+                if newValue.count > FieldValidator.maxNotesLength {
+                    viewModel.notes = String(newValue.prefix(FieldValidator.maxNotesLength))
+                }
             }
         }
     }
 
     private var footerButtons: some View {
         VStack(spacing: 12) {
-            if viewModel.errors.hasErrors {
-                AppMessageCard(title: "Eksik alanlar var", message: "Lütfen zorunlu alanları kontrol edin.", color: .red)
-            }
-
             HStack(spacing: 12) {
                 Button("İptal") {
                     dismiss()
@@ -237,6 +257,8 @@ struct NewVehicleView: View {
                         if saveSucceeded {
                             didCreateVehicle?()
                             dismiss()
+                        } else if viewModel.errors.hasErrors {
+                            validationShake += 1
                         }
                     }
                 } label: {

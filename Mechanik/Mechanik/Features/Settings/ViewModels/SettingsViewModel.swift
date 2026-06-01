@@ -13,7 +13,7 @@ final class SettingsViewModel: ObservableObject {
 
     @Published var businessNameDraft = "" {
         didSet {
-            let filteredName = Self.filteredBusinessName(businessNameDraft)
+            let filteredName = FieldValidator.filteredBusinessName(businessNameDraft)
             if filteredName != businessNameDraft {
                 businessNameDraft = filteredName
             }
@@ -21,12 +21,13 @@ final class SettingsViewModel: ObservableObject {
     }
     @Published var newBusinessName = "" {
         didSet {
-            let filteredName = Self.filteredBusinessName(newBusinessName)
+            let filteredName = FieldValidator.filteredBusinessName(newBusinessName)
             if filteredName != newBusinessName {
                 newBusinessName = filteredName
             }
         }
     }
+    @Published var businessNameError: String?
     @Published var pendingRoles: [String: String] = [:]
 
     @Published var resetPasswordMessage: SettingsAlertMessage?
@@ -38,11 +39,6 @@ final class SettingsViewModel: ObservableObject {
     @Published var isSavingRoles = false
     @Published var isRefreshingInviteCode = false
     @Published var isSendingPasswordReset = false
-
-    private static let businessNameLengthRange = 3...50
-    private static let allowedBusinessNameCharacters = CharacterSet.letters
-        .union(.decimalDigits)
-        .union(CharacterSet(charactersIn: "."))
 
     private let service: SettingsService
     private var currentUser: User?
@@ -105,10 +101,11 @@ final class SettingsViewModel: ObservableObject {
         guard let user else { return }
         let name = normalizedBusinessName(newBusinessName)
         newBusinessName = name
-        guard Self.businessNameLengthRange.contains(name.count) else {
-            errorMessage = SettingsAlertMessage(title: "Hata", message: "İşletme adı 3-50 karakter olmalı; sadece harf, rakam ve nokta içerebilir.")
+        if let validationError = FieldValidator.businessNameError(name) {
+            businessNameError = validationError
             return
         }
+        businessNameError = nil
 
         isCreatingBusiness = true
         defer { isCreatingBusiness = false }
@@ -127,10 +124,11 @@ final class SettingsViewModel: ObservableObject {
         guard canEditBusinessName, let business else { return }
         let name = normalizedBusinessName(businessNameDraft)
         businessNameDraft = name
-        guard Self.businessNameLengthRange.contains(name.count) else {
-            errorMessage = SettingsAlertMessage(title: "Hata", message: "İşletme adı 3-50 karakter olmalı; sadece harf, rakam ve nokta içerebilir.")
+        if let validationError = FieldValidator.businessNameError(name) {
+            businessNameError = validationError
             return
         }
+        businessNameError = nil
         guard name != business.name else { return }
 
         isSavingName = true
@@ -243,17 +241,8 @@ final class SettingsViewModel: ObservableObject {
         pendingRoles = [:]
     }
 
-    private static func filteredBusinessName(_ name: String) -> String {
-        let allowedScalars = name.unicodeScalars.filter {
-            allowedBusinessNameCharacters.contains($0)
-        }
-        let filteredName = String(String.UnicodeScalarView(allowedScalars))
-        guard filteredName.count > businessNameLengthRange.upperBound else { return filteredName }
-        return String(filteredName.prefix(businessNameLengthRange.upperBound))
-    }
-
     private func normalizedBusinessName(_ name: String) -> String {
-        Self.filteredBusinessName(name.trimmingCharacters(in: .whitespacesAndNewlines))
+        FieldValidator.filteredBusinessName(name.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     private func observeMembersIfNeeded(user: User) {

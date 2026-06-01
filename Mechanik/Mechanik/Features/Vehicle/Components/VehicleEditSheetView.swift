@@ -15,70 +15,91 @@ struct VehicleEditSheetView: View {
 
     let screenBackground: Color
 
+    @State private var validationShake = 0
+
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 16) {
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
 
-                if viewModel.editErrors.hasErrors {
-                    FeedbackStateView(
-                        icon: "exclamationmark.circle",
-                        title: "Eksik veya hatalı alan var",
-                        message: "Lütfen alanları kontrol edin."
+                    if viewModel.editErrors.hasErrors {
+                        FormValidationBanner(
+                            message: "Kırmızı ile işaretli alanları kontrol edin."
+                        )
+                    }
+
+                    AppTextField(
+                        title: "Araç Sahibi",
+                        placeholder: "Ad Soyad",
+                        text: $viewModel.ownerName,
+                        error: viewModel.editErrors.ownerName
                     )
+                    .id(FormFieldAnchor.ownerName.rawValue)
+
+                    AppTextField(
+                        title: "Telefon",
+                        placeholder: "0555 123 45 67",
+                        text: $viewModel.ownerPhone,
+                        keyboardType: .phonePad,
+                        error: viewModel.editErrors.ownerPhone
+                    )
+                    .id(FormFieldAnchor.ownerPhone.rawValue)
+
+                    AppTextField(
+                        title: "Motor Hacmi",
+                        placeholder: viewModel.fuelType == .electric
+                            ? "Elektrikli araçta geçerli değil"
+                            : "1.6",
+                        text: $viewModel.engineSize,
+                        keyboardType: .decimalPad,
+                        error: viewModel.editErrors.engineSize,
+                        isDisabled: viewModel.fuelType == .electric
+                    )
+                    .id(FormFieldAnchor.engineSize.rawValue)
+
+                    AppTextField(
+                        title: "Şasi No",
+                        placeholder: "17 karakter",
+                        text: $viewModel.chassisNo,
+                        error: viewModel.editErrors.chassisNo
+                    )
+                    .id(FormFieldAnchor.chassisNo.rawValue)
+
+                    AppTextField(
+                        title: "Model Yılı",
+                        placeholder: "2024",
+                        text: $viewModel.year,
+                        keyboardType: .numberPad,
+                        error: viewModel.editErrors.year
+                    )
+                    .id(FormFieldAnchor.year.rawValue)
+
+                    fuelTypeSection
+
+                    FormTextEditor(
+                        title: "Notlar",
+                        text: $viewModel.notes,
+                        error: viewModel.editErrors.notes,
+                        minHeight: 120
+                    )
+                    .id(FormFieldAnchor.notes.rawValue)
+                    .onChange(of: viewModel.notes) { _, newValue in
+                        if newValue.count > FieldValidator.maxNotesLength {
+                            viewModel.notes = String(newValue.prefix(FieldValidator.maxNotesLength))
+                        }
+                    }
+
+                    actionButtons
                 }
-
-                AppTextField(
-                    title: "Araç Sahibi",
-                    placeholder: "Ad Soyad",
-                    text: $viewModel.ownerName,
-                    error: viewModel.editErrors.ownerName
-                )
-
-                AppTextField(
-                    title: "Telefon",
-                    placeholder: "0555 123 45 67",
-                    text: $viewModel.ownerPhone,
-                    keyboardType: .phonePad,
-                    error: viewModel.editErrors.ownerPhone
-                )
-
-                AppTextField(
-                    title: "Motor Hacmi",
-                    placeholder: viewModel.fuelType == .electric
-                        ? "Elektrikli araçta geçerli değil"
-                        : "1.6",
-                    text: $viewModel.engineSize,
-                    keyboardType: .decimalPad,
-                    error: viewModel.editErrors.engineSize,
-                    isDisabled: viewModel.fuelType == .electric
-                )
-
-                AppTextField(
-                    title: "Şasi No",
-                    placeholder: "17 karakter",
-                    text: $viewModel.chassisNo,
-                    error: viewModel.editErrors.chassisNo
-                )
-
-                AppTextField(
-                    title: "Model Yılı",
-                    placeholder: "2024",
-                    text: $viewModel.year,
-                    keyboardType: .numberPad,
-                    error: viewModel.editErrors.year
-                )
-
-                fuelTypeSection
-
-                notesSection
-
-                actionButtons
+                .padding(16)
+                .shake(trigger: validationShake)
             }
-            .padding(16)
+            .formScrollFocus(anchor: viewModel.focusFieldAnchor, proxy: proxy)
         }
         .background(screenBackground)
     }
 }
+
 // MARK: Extensions
 
 extension VehicleEditSheetView {
@@ -96,31 +117,6 @@ extension VehicleEditSheetView {
                 }
             }
             .pickerStyle(.segmented)
-        }
-    }
-
-    fileprivate var notesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Notlar")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            TextEditor(text: $viewModel.notes)
-                .frame(minHeight: 120)
-                .padding(12)
-                .background(
-                    Color(
-                        red: 0.97,
-                        green: 0.97,
-                        blue: 0.96
-                    )
-                )
-                .clipShape(
-                    RoundedRectangle(
-                        cornerRadius: 16,
-                        style: .continuous
-                    )
-                )
         }
     }
 
@@ -147,6 +143,8 @@ extension VehicleEditSheetView {
 
                     if didSave {
                         isPresented = false
+                    } else if viewModel.editErrors.hasErrors {
+                        validationShake += 1
                     }
                 }
             } label: {

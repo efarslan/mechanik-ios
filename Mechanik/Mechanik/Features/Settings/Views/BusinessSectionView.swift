@@ -15,6 +15,7 @@ struct BusinessSectionView: View {
     @Binding var businessNameDraft: String
     @Binding var copied: Bool
 
+    var businessNameError: String? = nil
     let isSavingName: Bool
     let canEditBusinessName: Bool
     let canManageStaff: Bool
@@ -30,11 +31,16 @@ struct BusinessSectionView: View {
             // MARK: NAME EDIT
             if isEditingBusinessName {
 
-                TextField("İşletme adı", text: $businessNameDraft)
-                    .textInputAutocapitalization(.words)
-                    .padding()
-                    .background(Color.gray.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                VStack(alignment: .leading, spacing: 6) {
+                    TextField("İşletme adı", text: $businessNameDraft)
+                        .textInputAutocapitalization(.words)
+                        .padding()
+                        .background(Color.gray.opacity(0.08))
+                        .invalidFieldBorder(isInvalid: businessNameError != nil, cornerRadius: 12)
+                        .id(FormFieldAnchor.businessName.rawValue)
+
+                    FormErrorText(message: businessNameError)
+                }
 
                 HStack {
                     Button("İptal") {

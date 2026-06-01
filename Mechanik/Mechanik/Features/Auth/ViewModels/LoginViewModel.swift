@@ -5,6 +5,25 @@ import FirebaseAuth
 @MainActor
 final class LoginViewModel: ObservableObject {
 
+    struct FormErrors {
+        var name: String?
+        var email: String?
+        var password: String?
+        var confirmPassword: String?
+
+        var hasErrors: Bool {
+            name != nil || email != nil || password != nil || confirmPassword != nil
+        }
+
+        var firstInvalidAnchor: FormFieldAnchor? {
+            if name != nil { return .authName }
+            if email != nil { return .authEmail }
+            if password != nil { return .authPassword }
+            if confirmPassword != nil { return .authConfirmPassword }
+            return nil
+        }
+    }
+
     enum AuthMode {
         case signIn
         case owner
@@ -19,6 +38,8 @@ final class LoginViewModel: ObservableObject {
     @Published var showConfirmPassword: Bool = false
 
     @Published var isSubmitting: Bool = false
+    @Published var errors = FormErrors()
+    @Published var focusFieldAnchor: FormFieldAnchor?
     @Published var errorMessage: String?
     @Published var successMessage: String?
 
@@ -38,6 +59,7 @@ final class LoginViewModel: ObservableObject {
         guard newMode != mode else { return }
 
         mode = newMode
+        errors = FormErrors()
         errorMessage = nil
         successMessage = nil
         name = ""
@@ -48,6 +70,7 @@ final class LoginViewModel: ObservableObject {
     }
 
     func submit(appState: AppState) async {
+        errors = FormErrors()
         errorMessage = nil
         successMessage = nil
 
@@ -95,8 +118,8 @@ final class LoginViewModel: ObservableObject {
             return
         }
 
-        guard isValidEmail(normalizedEmail) else {
-            forgotPasswordErrorMessage = "Geçerli bir e-posta adresi girin."
+        if let emailError = FieldValidator.emailError(normalizedEmail) {
+            forgotPasswordErrorMessage = emailError
             return
         }
 
@@ -113,37 +136,30 @@ final class LoginViewModel: ObservableObject {
     }
 
     private func validateForm() -> String? {
+        var nextErrors = FormErrors()
         let normalizedEmail = normalized(email)
+        let isRegister = mode == .owner
 
-        guard !normalizedEmail.isEmpty, !password.isEmpty else {
-            return "E-posta ve şifre zorunludur."
+        if isRegister {
+            nextErrors.name = FieldValidator.nameError(name)
+        }
+        nextErrors.email = FieldValidator.emailError(normalizedEmail)
+        nextErrors.password = FieldValidator.passwordError(password, isRegister: isRegister)
+        if isRegister {
+            nextErrors.confirmPassword = FieldValidator.confirmPasswordError(
+                password: password,
+                confirmPassword: confirmPassword
+            )
         }
 
-        guard mode == .signIn || !normalizedName(name).isEmpty else {
-            return "Ad soyad zorunludur."
-        }
+        errors = nextErrors
+        focusFieldAnchor = nextErrors.firstInvalidAnchor
+        guard nextErrors.hasErrors else { return nil }
 
-        guard isValidEmail(normalizedEmail) else {
-            return "Geçerli bir e-posta adresi girin."
-        }
-
-        guard mode == .signIn || password.count >= 8 else {
-            return "Şifre en az 8 karakter olmalıdır."
-        }
-
-        guard mode == .signIn || password.rangeOfCharacter(from: .uppercaseLetters) != nil else {
-            return "Şifre en az bir büyül harf içermelidir."
-        }
-
-        guard mode == .signIn || password.rangeOfCharacter(from: .decimalDigits) != nil else {
-            return "Şifre en az bir rakam içermelidir."
-        }
-
-        guard mode == .signIn || password == confirmPassword else {
-            return "Şifreler eşleşmiyor."
-        }
-
-        return nil
+        return nextErrors.name
+            ?? nextErrors.email
+            ?? nextErrors.password
+            ?? nextErrors.confirmPassword
     }
 
     private func handleSubmitError(_ error: Error, normalizedEmail: String) async {
@@ -194,10 +210,5 @@ final class LoginViewModel: ObservableObject {
 
     private func normalizedName(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private func isValidEmail(_ email: String) -> Bool {
-        let pattern = #"^[^\s@]+@[^\s@]+\.[^\s@]+$"#
-        return email.range(of: pattern, options: .regularExpression) != nil
     }
 }

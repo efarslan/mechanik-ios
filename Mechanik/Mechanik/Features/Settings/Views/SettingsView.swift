@@ -19,6 +19,7 @@ struct SettingsView: View {
                     
                     CreateBusinessView(
                         businessName: $viewModel.newBusinessName,
+                        businessNameError: viewModel.businessNameError,
                         isCreating: viewModel.isCreatingBusiness,
                         
                         onCreate: {
@@ -53,6 +54,11 @@ struct SettingsView: View {
             .onChange(of: appState.currentUser?.emailVerified) { _, _ in
                 Task {
                     await viewModel.load(user: appState.currentUser)
+                }
+            }
+            .onChange(of: isEditingBusinessName) { _, isEditing in
+                if !isEditing {
+                    viewModel.businessNameError = nil
                 }
             }
             .alert(item: $viewModel.errorMessage) { message in
@@ -110,6 +116,7 @@ struct SettingsView: View {
                         isEditingBusinessName: $isEditingBusinessName,
                         businessNameDraft: $viewModel.businessNameDraft,
                         copied: $copied,
+                        businessNameError: viewModel.businessNameError,
                         
                         isSavingName: viewModel.isSavingName,
                         canEditBusinessName: viewModel.canEditBusinessName,

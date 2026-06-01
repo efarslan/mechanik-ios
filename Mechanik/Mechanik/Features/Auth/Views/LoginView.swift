@@ -6,6 +6,7 @@ struct LoginView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = LoginViewModel()
     @FocusState private var focusedField: Field?
+    @State private var validationShake = 0
 
     private enum Field {
         case name
@@ -17,6 +18,7 @@ struct LoginView: View {
 
     var body: some View {
         GeometryReader { geometry in
+            ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
                 let isWideLayout = geometry.size.width > 760
 
@@ -45,6 +47,9 @@ struct LoginView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 28)
                 .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                .shake(trigger: validationShake)
+            }
+            .formScrollFocus(anchor: viewModel.focusFieldAnchor, proxy: proxy)
             }
             .background(backgroundView.ignoresSafeArea())
         }
@@ -121,6 +126,12 @@ struct LoginView: View {
 
     private var formFields: some View {
         VStack(alignment: .leading, spacing: 16) {
+            if viewModel.errors.hasErrors {
+                FormValidationBanner(
+                    message: "Kırmızı ile işaretli alanları kontrol edin."
+                )
+            }
+
             if viewModel.mode == .owner {
                 inputSection(
                     title: "Ad Soyad",
@@ -129,8 +140,10 @@ struct LoginView: View {
                     keyboardType: .default,
                     textContentType: .name,
                     textInputAutocapitalization: .words,
+                    error: viewModel.errors.name,
                     field: .name
                 )
+                .id(FormFieldAnchor.authName.rawValue)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
 
@@ -140,16 +153,20 @@ struct LoginView: View {
                 placeholder: "ornek@email.com",
                 keyboardType: .emailAddress,
                 textContentType: .emailAddress,
+                error: viewModel.errors.email,
                 field: .email
             )
+            .id(FormFieldAnchor.authEmail.rawValue)
 
             passwordField(
                 title: "Şifre",
                 text: $viewModel.password,
                 isVisible: $viewModel.showPassword,
                 textContentType: viewModel.mode == .signIn ? .password : .newPassword,
+                error: viewModel.errors.password,
                 field: .password
             )
+            .id(FormFieldAnchor.authPassword.rawValue)
 
             if viewModel.mode == .signIn {
                 Button("Şifremi Unuttum") {
@@ -169,8 +186,10 @@ struct LoginView: View {
                     text: $viewModel.confirmPassword,
                     isVisible: $viewModel.showConfirmPassword,
                     textContentType: .newPassword,
+                    error: viewModel.errors.confirmPassword,
                     field: .confirmPassword
                 )
+                .id(FormFieldAnchor.authConfirmPassword.rawValue)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
 
@@ -186,6 +205,9 @@ struct LoginView: View {
                 hideKeyboard()
                 Task {
                     await viewModel.submit(appState: appState)
+                    if viewModel.errors.hasErrors {
+                        validationShake += 1
+                    }
                 }
             } label: {
                 HStack(spacing: 10) {
@@ -344,6 +366,7 @@ struct LoginView: View {
         keyboardType: UIKeyboardType,
         textContentType: UITextContentType?,
         textInputAutocapitalization: TextInputAutocapitalization = .never,
+        error: String? = nil,
         field: Field
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -361,10 +384,12 @@ struct LoginView: View {
                 .background(Color(red: 0.97, green: 0.96, blue: 0.94))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(focusedField == field ? Color(red: 0.62, green: 0.44, blue: 0.24) : Color.clear, lineWidth: 1.2)
+                        .stroke(inputBorderColor(error: error, field: field), lineWidth: 1.2)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .focused($focusedField, equals: field)
+
+            FormErrorText(message: error)
         }
     }
 
@@ -373,6 +398,7 @@ struct LoginView: View {
         text: Binding<String>,
         isVisible: Binding<Bool>,
         textContentType: UITextContentType?,
+        error: String? = nil,
         field: Field
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -406,10 +432,22 @@ struct LoginView: View {
             .background(Color(red: 0.97, green: 0.96, blue: 0.94))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(focusedField == field ? Color(red: 0.62, green: 0.44, blue: 0.24) : Color.clear, lineWidth: 1.2)
+                    .stroke(inputBorderColor(error: error, field: field), lineWidth: 1.2)
             )
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            FormErrorText(message: error)
         }
+    }
+
+    private func inputBorderColor(error: String?, field: Field) -> Color {
+        if error != nil {
+            return Color.red.opacity(0.5)
+        }
+        if focusedField == field {
+            return Color(red: 0.62, green: 0.44, blue: 0.24)
+        }
+        return Color.clear
     }
 
     private func heroBadge(title: String) -> some View {

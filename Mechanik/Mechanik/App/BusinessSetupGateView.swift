@@ -4,12 +4,8 @@ struct BusinessSetupGateView: View {
     @EnvironmentObject private var appState: AppState
     @State private var businessName = ""
     @State private var isCreating = false
+    @State private var businessNameError: String?
     @State private var errorMessage: String?
-
-    private static let businessNameLengthRange = 3...50
-    private static let allowedBusinessNameCharacters = CharacterSet.letters
-        .union(.decimalDigits)
-        .union(CharacterSet(charactersIn: "."))
 
     private let service = SettingsService()
 
@@ -19,6 +15,7 @@ struct BusinessSetupGateView: View {
 
             CreateBusinessView(
                 businessName: $businessName,
+                businessNameError: businessNameError,
                 isCreating: isCreating,
                 onCreate: {
                     Task { await createBusiness() }
@@ -44,12 +41,12 @@ struct BusinessSetupGateView: View {
 
     private func createBusiness() async {
         guard let user = appState.currentUser else { return }
-        let name = Self.filteredBusinessName(businessName.trimmingCharacters(in: .whitespacesAndNewlines))
+        let name = FieldValidator.filteredBusinessName(
+            businessName.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
         businessName = name
-        guard Self.businessNameLengthRange.contains(name.count), !isCreating else {
-            errorMessage = "İşletme adı 3-50 karakter olmalı; sadece harf, rakam ve nokta içerebilir."
-            return
-        }
+        businessNameError = FieldValidator.businessNameError(name)
+        guard businessNameError == nil, !isCreating else { return }
 
         isCreating = true
         errorMessage = nil
@@ -62,15 +59,6 @@ struct BusinessSetupGateView: View {
         }
 
         isCreating = false
-    }
-
-    private static func filteredBusinessName(_ name: String) -> String {
-        let allowedScalars = name.unicodeScalars.filter {
-            allowedBusinessNameCharacters.contains($0)
-        }
-        let filteredName = String(String.UnicodeScalarView(allowedScalars))
-        guard filteredName.count > businessNameLengthRange.upperBound else { return filteredName }
-        return String(filteredName.prefix(businessNameLengthRange.upperBound))
     }
 }
 

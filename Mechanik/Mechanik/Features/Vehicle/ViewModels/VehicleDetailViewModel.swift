@@ -37,9 +37,25 @@ final class VehicleDetailViewModel: ObservableObject {
         var engineSize: String?
         var chassisNo: String?
         var year: String?
+        var notes: String?
 
         var hasErrors: Bool {
-            ownerName != nil || ownerPhone != nil || engineSize != nil || chassisNo != nil || year != nil
+            ownerName != nil
+                || ownerPhone != nil
+                || engineSize != nil
+                || chassisNo != nil
+                || year != nil
+                || notes != nil
+        }
+
+        var firstInvalidAnchor: FormFieldAnchor? {
+            if ownerName != nil { return .ownerName }
+            if ownerPhone != nil { return .ownerPhone }
+            if year != nil { return .year }
+            if engineSize != nil { return .engineSize }
+            if chassisNo != nil { return .chassisNo }
+            if notes != nil { return .notes }
+            return nil
         }
     }
 
@@ -63,6 +79,7 @@ final class VehicleDetailViewModel: ObservableObject {
     @Published var fuelType: VehicleFuelType = .gasoline
     @Published var notes: String = ""
     @Published var editErrors = EditFormErrors()
+    @Published var focusFieldAnchor: FormFieldAnchor?
 
     private let vehicleService: VehicleService
     private let businessService: BusinessService
@@ -225,44 +242,20 @@ final class VehicleDetailViewModel: ObservableObject {
 
     @discardableResult
     func validateEditForm() -> EditFormErrors {
+        let currentYear = Calendar.current.component(.year, from: Date()) + 1
         var errors = EditFormErrors()
-        let trimmedOwnerName = ownerName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedPhone = ownerPhone.replacingOccurrences(of: "[\\s()-]", with: "", options: .regularExpression)
-        let trimmedYear = year.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedEngine = engineSize.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedChassis = chassisNo.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        let currentYear = Calendar.current.component(.year, from: Date())
 
-        if trimmedOwnerName.isEmpty {
-            errors.ownerName = "Araç sahibi zorunludur."
-        }
-
-        if !trimmedPhone.isEmpty,
-           trimmedPhone.range(of: #"^(\+90|0)?[5][0-9]{9}$"#, options: .regularExpression) == nil {
-            errors.ownerPhone = "Geçerli telefon numarası giriniz."
-        }
-
-        if trimmedYear.range(of: #"^\d{4}$"#, options: .regularExpression) == nil {
-            errors.year = "4 haneli model yılı giriniz."
-        } else if let yearValue = Int(trimmedYear), yearValue < 1930 || yearValue > currentYear + 1 {
-            errors.year = "Model yılı 1930-\(currentYear + 1) arasında olmalı."
-        }
-
-        if fuelType != .electric,
-           !trimmedEngine.isEmpty,
-           trimmedEngine.range(of: #"^\d\.\d{1,2}$"#, options: .regularExpression) == nil {
-            errors.engineSize = "Geçerli format: 1.6"
-        }
-
-        if !trimmedChassis.isEmpty {
-            if trimmedChassis.count != 17 {
-                errors.chassisNo = "Şasi numarası 17 karakter olmalı."
-            } else if trimmedChassis.range(of: #"[IOQ]"#, options: .regularExpression) != nil {
-                errors.chassisNo = "Şasi numarasında I, O, Q kullanılamaz."
-            }
-        }
+        errors.ownerName = FieldValidator.ownerNameError(ownerName)
+        errors.ownerPhone = FieldValidator.phoneError(ownerPhone)
+        errors.year = FieldValidator.yearError(year, maxYear: currentYear)
+        errors.engineSize = fuelType == .electric
+            ? nil
+            : FieldValidator.engineSizeError(engineSize, required: false)
+        errors.chassisNo = FieldValidator.chassisError(chassisNo)
+        errors.notes = FieldValidator.notesError(notes)
 
         editErrors = errors
+        focusFieldAnchor = errors.firstInvalidAnchor
         return errors
     }
 

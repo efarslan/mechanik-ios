@@ -12,6 +12,25 @@ import UIKit
 @MainActor
 final class JobDetailViewModel: ObservableObject {
 
+    struct FormErrors {
+        var title: String?
+        var laborFee: String?
+        var notes: String?
+        var quickJobs: String?
+
+        var hasErrors: Bool {
+            title != nil || laborFee != nil || notes != nil || quickJobs != nil
+        }
+
+        var firstInvalidAnchor: FormFieldAnchor? {
+            if title != nil { return .jobTitle }
+            if laborFee != nil { return .jobLaborFee }
+            if notes != nil { return .jobNotes }
+            if quickJobs != nil { return .jobQuickJobs }
+            return nil
+        }
+    }
+
     // MARK: - Input Models
     let job: JobListItem
     let businessId: String
@@ -29,6 +48,8 @@ final class JobDetailViewModel: ObservableObject {
     @Published var newImages: [PickedImage] = []
 
     @Published var isSaving = false
+    @Published var errors = FormErrors()
+    @Published var focusFieldAnchor: FormFieldAnchor?
     @Published var fileError: String?
 
     @Published var showDeleteConfirmation = false
@@ -120,6 +141,7 @@ final class JobDetailViewModel: ObservableObject {
         images = job.imageUrls
         newImages = []
 
+        errors = FormErrors()
         fileError = nil
         showDeleteConfirmation = false
         showCompleteConfirmation = false
@@ -195,8 +217,30 @@ final class JobDetailViewModel: ObservableObject {
     }
 
     @discardableResult
+    func validate() -> FormErrors {
+        var nextErrors = FormErrors()
+
+        nextErrors.title = FieldValidator.jobTitleError(title)
+        nextErrors.laborFee = FieldValidator.laborFeeError(parsedLaborFee)
+        nextErrors.notes = FieldValidator.notesError(notes)
+        nextErrors.quickJobs = quickJobsValidationError()
+
+        errors = nextErrors
+        focusFieldAnchor = nextErrors.firstInvalidAnchor
+        return nextErrors
+    }
+
+    var canSave: Bool {
+        FieldValidator.jobTitleError(title) == nil
+            && FieldValidator.laborFeeError(parsedLaborFee) == nil
+            && FieldValidator.notesError(notes) == nil
+            && quickJobsValidationError() == nil
+    }
+
+    @discardableResult
     func saveChanges() async -> Bool {
-        guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        let validationResult = validate()
+        guard !validationResult.hasErrors else { return false }
 
         isSaving = true
 
@@ -248,6 +292,24 @@ final class JobDetailViewModel: ObservableObject {
 
         isSaving = false
         return false
+    }
+
+    private func quickJobsValidationError() -> String? {
+        for item in items {
+            let trimmedName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedName.isEmpty else { continue }
+
+            if let nameError = FieldValidator.quickJobNameError(item.name) {
+                return nameError
+            }
+            if let quantityError = FieldValidator.quickJobQuantityError(item.quantity, hasName: true) {
+                return quantityError
+            }
+            if let priceError = FieldValidator.quickJobUnitPriceError(item.unitPrice, hasName: true) {
+                return priceError
+            }
+        }
+        return nil
     }
 
     @discardableResult

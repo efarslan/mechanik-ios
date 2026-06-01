@@ -9,6 +9,7 @@ struct NewJobView: View {
     @StateObject private var viewModel = NewJobViewModel()
     @State private var hasLoaded = false
     @State private var isPresentingImagePicker = false
+    @State private var validationShake = 0
 
     let vehicleId: String
     let didCreateJob: (() -> Void)?
@@ -25,33 +26,43 @@ struct NewJobView: View {
             } else {
                 VStack(spacing: 0) {
                     // Scroll içerik
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 14) {
-                            if let errorMessage = viewModel.errorMessage {
-                                infoCard(
-                                    icon: "exclamationmark.circle.fill",
-                                    title: "Bir sorun var",
-                                    message: errorMessage,
-                                    color: .red
-                                )
-                            }
+                    ScrollViewReader { proxy in
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: 14) {
+                                if let errorMessage = viewModel.errorMessage {
+                                    infoCard(
+                                        icon: "exclamationmark.circle.fill",
+                                        title: "Bir sorun var",
+                                        message: errorMessage,
+                                        color: .red
+                                    )
+                                }
 
-                            if let infoMessage = viewModel.infoMessage {
-                                infoCard(
-                                    icon: "info.circle.fill",
-                                    title: "Bilgi",
-                                    message: infoMessage,
-                                    color: .orange
-                                )
-                            }
+                                if let infoMessage = viewModel.infoMessage {
+                                    infoCard(
+                                        icon: "info.circle.fill",
+                                        title: "Bilgi",
+                                        message: infoMessage,
+                                        color: .orange
+                                    )
+                                }
 
-                            basicInfoSection
-                            quickJobsSection
-                            imagesSection
+                                if viewModel.errors.hasErrors {
+                                    FormValidationBanner(
+                                        message: "Kırmızı ile işaretli alanları kontrol edin."
+                                    )
+                                }
+
+                                basicInfoSection
+                                quickJobsSection
+                                imagesSection
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            .padding(.bottom, 24)
+                            .shake(trigger: validationShake)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-                        .padding(.bottom, 24)
+                        .formScrollFocus(anchor: viewModel.focusFieldAnchor, proxy: proxy)
                     }
                     .background(screenBackground)
 
@@ -104,15 +115,22 @@ struct NewJobView: View {
         let isComplete = !viewModel.title.trimmingCharacters(in: .whitespaces).isEmpty
 
         return formSection(title: "Temel Bilgiler", subtitle: "İşlem başlığı ve araç kilometresi", step: 1, isComplete: isComplete) {
-            AppTextField(title: "İşlem Başlığı *", placeholder: "Periyodik bakım", text: $viewModel.title)
+            AppTextField(
+                title: "İşlem Başlığı *",
+                placeholder: "Periyodik bakım",
+                text: $viewModel.title,
+                error: viewModel.errors.title
+            )
+            .id(FormFieldAnchor.jobTitle.rawValue)
 
-            HStack(spacing: 12) {
                 AppTextField(
-                    title: "Kilometre",
+                    title: "Kilometre *",
                     placeholder: "150.000",
                     text: $viewModel.mileage,
-                    keyboardType: .numberPad
+                    keyboardType: .numberPad,
+                    error: viewModel.errors.mileage
                 )
+                .id(FormFieldAnchor.jobMileage.rawValue)
                 .onChange(of: viewModel.mileage) { _, newValue in
                     viewModel.formatMileageInput(newValue)
                 }
@@ -121,21 +139,28 @@ struct NewJobView: View {
                     title: "İşçilik Ücreti",
                     placeholder: "0",
                     text: $viewModel.laborFee,
-                    keyboardType: .numberPad
+                    keyboardType: .numberPad,
+                    error: viewModel.errors.laborFee
                 )
+                .id(FormFieldAnchor.jobLaborFee.rawValue)
                 .onChange(of: viewModel.laborFee) { _, newValue in
                     viewModel.formatLaborFeeInput(newValue)
                 }
+            
+
+            FormTextEditor(
+                title: "Notlar",
+                text: $viewModel.notes,
+                error: viewModel.errors.notes,
+                minHeight: 90
+            )
+            .id(FormFieldAnchor.jobNotes.rawValue)
+            .onChange(of: viewModel.notes) { _, newValue in
+                if newValue.count > FieldValidator.maxNotesLength {
+                    viewModel.notes = String(newValue.prefix(FieldValidator.maxNotesLength))
+                }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                FormLabel(title: "Notlar")
-                TextEditor(text: $viewModel.notes)
-                    .frame(minHeight: 90)
-                    .padding(12)
-                    .background(Color(red: 0.97, green: 0.97, blue: 0.96))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }
         }
     }
 
@@ -279,7 +304,19 @@ struct NewJobView: View {
                 }
                 .buttonStyle(.plain)
             }
+
+            if let quickJobsError = viewModel.errors.quickJobs {
+                FormErrorText(message: quickJobsError)
+                    .id(FormFieldAnchor.jobQuickJobs.rawValue)
+            }
         }
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(
+                    viewModel.errors.quickJobs != nil ? InvalidFieldStyle.borderColor : .clear,
+                    lineWidth: viewModel.errors.quickJobs != nil ? InvalidFieldStyle.borderWidth : 0
+                )
+        )
     }
 
     private var imagesSection: some View {
@@ -352,10 +389,8 @@ struct NewJobView: View {
 
     private var footerButtons: some View {
         let emailVerified = appState.currentUser?.emailVerified == true
-        let canSave = viewModel.canSubmit && emailVerified
 
         return VStack(spacing: 8) {
-            // Uyarı — neden disabled
             if !emailVerified {
                 HStack(spacing: 6) {
                     Image(systemName: "envelope.badge")
@@ -364,15 +399,6 @@ struct NewJobView: View {
                         .font(.caption)
                 }
                 .foregroundStyle(.orange)
-                .frame(maxWidth: .infinity, alignment: .center)
-            } else if !viewModel.canSubmit {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.circle")
-                        .font(.caption)
-                    Text("İşlem başlığı gerekli.")
-                        .font(.caption)
-                }
-                .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
             }
 
@@ -388,10 +414,13 @@ struct NewJobView: View {
 
                 Button {
                     Task {
+                        _ = viewModel.validate()
                         let didSave = await viewModel.save()
                         if didSave {
                             didCreateJob?()
                             dismiss()
+                        } else if viewModel.errors.hasErrors {
+                            validationShake += 1
                         }
                     }
                 } label: {
@@ -407,10 +436,10 @@ struct NewJobView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.white)
-                .background(canSave ? Color.black.opacity(0.86) : Color.gray.opacity(0.35))
+                .background(emailVerified ? Color.black.opacity(0.86) : Color.gray.opacity(0.35))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .disabled(viewModel.isSaving || !canSave)
-                .animation(.easeInOut(duration: 0.2), value: canSave)
+                .disabled(viewModel.isSaving || !emailVerified)
+                .animation(.easeInOut(duration: 0.2), value: emailVerified)
             }
         }
     }

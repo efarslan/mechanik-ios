@@ -1,29 +1,21 @@
 import SwiftUI
 
-struct AppTextField: View {
-
+struct FormTextEditor: View {
     let title: String
-    let placeholder: String
     @Binding var text: String
-
-    var keyboardType: UIKeyboardType = .default
     var error: String? = nil
-    var isDisabled: Bool = false
+    var minHeight: CGFloat = 90
 
     private var isInvalid: Bool { error != nil }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-
             FormLabel(title: title, isInvalid: isInvalid)
 
-            TextField(placeholder, text: $text)
-                .keyboardType(keyboardType)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .disabled(isDisabled)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 14)
+            TextEditor(text: $text)
+                .frame(minHeight: minHeight)
+                .padding(12)
+                .scrollContentBackground(.hidden)
                 .background(Color(red: 0.97, green: 0.97, blue: 0.96))
                 .invalidFieldBorder(isInvalid: isInvalid)
 

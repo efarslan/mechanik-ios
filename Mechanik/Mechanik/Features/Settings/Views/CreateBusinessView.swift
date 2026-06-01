@@ -10,19 +10,13 @@ import SwiftUI
 struct CreateBusinessView: View {
 
     @Binding var businessName: String
-
+    var businessNameError: String?
     let isCreating: Bool
-
     let onCreate: () -> Void
     let onLogout: () -> Void
 
-    private static let businessNameLengthRange = 3...50
-    private static let allowedBusinessNameCharacters = CharacterSet.letters
-        .union(.decimalDigits)
-        .union(CharacterSet(charactersIn: "."))
-
     private var isBusinessNameValid: Bool {
-        Self.businessNameLengthRange.contains(businessName.count)
+        FieldValidator.businessNameError(businessName) == nil
     }
 
     var body: some View {
@@ -41,7 +35,13 @@ struct CreateBusinessView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            AppTextField(title: "İşletme Adı", placeholder: "İşletme Adı 3-50 Karakter Olmalıdır", text: $businessName)
+            AppTextField(
+                title: "İşletme Adı",
+                placeholder: "İşletme adı 3-50 karakter",
+                text: $businessName,
+                error: businessNameError
+            )
+            .id(FormFieldAnchor.businessName.rawValue)
             
             HStack {
                 Spacer()
@@ -87,22 +87,12 @@ struct CreateBusinessView: View {
         .padding(.horizontal, 16)
         
         .onChange(of: businessName) { _, newValue in
-            let filteredName = Self.filteredBusinessName(newValue)
+            let filteredName = FieldValidator.filteredBusinessName(newValue)
             if filteredName != newValue {
                 businessName = filteredName
             }
         }
     }
-
-    private static func filteredBusinessName(_ name: String) -> String {
-        let allowedScalars = name.unicodeScalars.filter {
-            allowedBusinessNameCharacters.contains($0)
-        }
-        let filteredName = String(String.UnicodeScalarView(allowedScalars))
-        guard filteredName.count > businessNameLengthRange.upperBound else { return filteredName }
-        return String(filteredName.prefix(businessNameLengthRange.upperBound))
-    }
-    
 }
 
 #Preview {
